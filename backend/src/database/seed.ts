@@ -165,9 +165,11 @@ async function seed() {
     },
   ];
 
+  const savedInventoryItems = [];
   for (const item of inventoryItems) {
     const inventoryItem = inventoryRepository.create(item);
-    await inventoryRepository.save(inventoryItem);
+    const savedItem = await inventoryRepository.save(inventoryItem);
+    savedInventoryItems.push(savedItem);
   }
 
   // Create sample orders
@@ -181,8 +183,8 @@ async function seed() {
       total_amount: 17.00,
       notes: 'Sin hielo en el mojito',
       items: [
-        { inventory_id: 1, quantity: 2, unit_price: 5.00 }, // 2 Corona
-        { inventory_id: 3, quantity: 1, unit_price: 12.00 }, // 1 Mojito
+        { inventory_id: savedInventoryItems[0].id, quantity: 2, price: 5.00 }, // 2 Corona
+        { inventory_id: savedInventoryItems[2].id, quantity: 1, price: 12.00 }, // 1 Mojito
       ]
     },
     {
@@ -193,8 +195,8 @@ async function seed() {
       total_amount: 23.00,
       notes: 'Mesa VIP',
       items: [
-        { inventory_id: 2, quantity: 1, unit_price: 8.00 }, // 1 Vodka Shot
-        { inventory_id: 4, quantity: 1, unit_price: 15.00 }, // 1 Red Wine
+        { inventory_id: savedInventoryItems[1].id, quantity: 1, price: 8.00 }, // 1 Vodka Shot
+        { inventory_id: savedInventoryItems[3].id, quantity: 1, price: 15.00 }, // 1 Red Wine
       ]
     }
   ];
@@ -209,7 +211,6 @@ async function seed() {
       const orderItem = orderItemRepository.create({
         ...item,
         order_id: savedOrder.id,
-        subtotal: item.unit_price * item.quantity,
       });
       await orderItemRepository.save(orderItem);
     }
