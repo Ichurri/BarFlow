@@ -1,4 +1,4 @@
-# BarFlow - Guía de Pruebas API
+# BarFlow - Guía de Pruebas API - Fase 2
 
 ## Prerrequisitos
 1. Servidor ejecutándose: `cd backend && npm run start:dev`
@@ -19,13 +19,14 @@ Después de ejecutar `npm run seed`, se crean los siguientes usuarios:
 ### Datos Adicionales Creados:
 - **2 Bares**: Main Bar, VIP Bar
 - **2 Waiters** asignados a los bares
-- **10 Mesas** con códigos QR (TABLE_001 a TABLE_010)
+- **10 Mesas** con códigos QR (2 ocupadas, 8 disponibles)
 - **5 Items de Inventario**:
   1. Corona Beer (Cerveza) - $5.00
   2. Vodka Shot (Spirits) - $8.00
   3. Mojito (Cocktails) - $12.00
   4. Red Wine Glass (Wine) - $15.00
   5. Whiskey Neat (Spirits) - $20.00
+- **2 Pedidos de Ejemplo**: 1 pendiente, 1 listo para entrega
 
 ## 1. Pruebas de Autenticación
 
@@ -182,6 +183,8 @@ curl -X GET http://localhost:3000/api/auth/profile \
   "updatedAt": "2025-09-22T..."
 }
 ```
+
+## 2. Pruebas de Inventario
 
 ## 2. Pruebas de Inventario
 
@@ -381,15 +384,360 @@ curl -X PATCH http://localhost:3000/api/inventory/1/stock \
 ```json
 {
   "id": 1,
-  "name": "Whisky Premium",
+  "name": "Corona Beer",
   "stockQuantity": 45,
   "message": "Stock actualizado correctamente"
 }
 ```
 
-## 3. Pruebas de Acceso Sin Autenticación
+## 3. Pruebas de Gestión de Mesas
 
-### 3.1 Acceso sin Token
+### 3.1 Listar Todas las Mesas (ADMIN)
+```bash
+curl -X GET http://localhost:3000/api/tables \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+```
+
+**Output Esperado:**
+```json
+[
+  {
+    "id": 1,
+    "qr_code": "TABLE_001",
+    "waiter_id": 1,
+    "status": "occupied",
+    "capacity": 4,
+    "location": "Main Floor",
+    "created_at": "2025-09-22T...",
+    "updated_at": "2025-09-22T...",
+    "waiter": {
+      "id": 1,
+      "user_id": 4,
+      "bar_id": 1,
+      "user": {
+        "id": 4,
+        "username": "waiter1",
+        "role": "WAITER"
+      }
+    }
+  },
+  // ... más mesas
+]
+```
+
+### 3.2 Mis Mesas Asignadas (WAITER)
+```bash
+curl -X GET http://localhost:3000/api/tables/my-tables \
+  -H "Authorization: Bearer $WAITER_TOKEN"
+```
+
+**Output Esperado:**
+```json
+[
+  {
+    "id": 1,
+    "qr_code": "TABLE_001",
+    "status": "occupied",
+    "capacity": 4,
+    "location": "Main Floor",
+    "orders": [
+      {
+        "id": 1,
+        "status": "pending",
+        "total_amount": 17.00,
+        "created_at": "2025-09-22T..."
+      }
+    ]
+  },
+  // ... solo mesas del waiter logueado
+]
+```
+
+### 3.3 Buscar Mesa por QR Code
+```bash
+curl -X GET http://localhost:3000/api/tables/qr/TABLE_001 \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+**Output Esperado:**
+```json
+{
+  "id": 1,
+  "qr_code": "TABLE_001",
+  "waiter_id": 1,
+  "status": "occupied",
+  "capacity": 4,
+  "location": "Main Floor",
+  "waiter": {
+    "id": 1,
+    "user": {
+      "id": 4,
+      "username": "waiter1",
+      "role": "WAITER"
+    }
+  }
+}
+```
+
+### 3.4 Cambiar Estado de Mesa
+```bash
+curl -X PATCH http://localhost:3000/api/tables/1/status \
+  -H "Authorization: Bearer $WAITER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"status": "cleaning"}'
+```
+
+**Output Esperado:**
+```json
+{
+  "id": 1,
+  "qr_code": "TABLE_001",
+  "status": "cleaning",
+  "capacity": 4,
+  "location": "Main Floor",
+  "message": "Estado de mesa actualizado"
+}
+```
+
+## 4. Pruebas de Sistema de Pedidos
+
+### 4.1 Crear Pedido Normal
+```bash
+curl -X POST http://localhost:3000/api/orders \
+  -H "Authorization: Bearer $WAITER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "table_id": 3,
+    "items": [
+      {
+        "inventory_id": 1,
+        "quantity": 2
+      },
+      {
+        "inventory_id": 3,
+        "quantity": 1
+      }
+    ],
+    "notes": "Sin hielo en el mojito"
+  }'
+```
+
+**Output Esperado:**
+```json
+{
+  "id": 3,
+  "table_id": 3,
+  "waiter_id": 1,
+  "bar_id": 1,
+  "status": "pending",
+  "total_amount": 22.00,
+  "notes": "Sin hielo en el mojito",
+  "created_at": "2025-09-22T...",
+  "orderItems": [
+    {
+      "id": 5,
+      "inventory_id": 1,
+      "quantity": 2,
+      "unit_price": 5.00,
+      "subtotal": 10.00,
+      "inventory": {
+        "name": "Corona Beer"
+      }
+    },
+    {
+      "id": 6,
+      "inventory_id": 3,
+      "quantity": 1,
+      "unit_price": 12.00,
+      "subtotal": 12.00,
+      "inventory": {
+        "name": "Mojito"
+      }
+    }
+  ]
+}
+```
+
+### 4.2 Crear Pedido por QR Code
+```bash
+curl -X POST http://localhost:3000/api/orders/qr/TABLE_004 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {
+        "inventory_id": 2,
+        "quantity": 1
+      }
+    ],
+    "notes": "Pedido desde mesa"
+  }'
+```
+
+**Output Esperado:**
+```json
+{
+  "id": 4,
+  "table_id": 4,
+  "waiter_id": 1,
+  "bar_id": 1,
+  "status": "pending",
+  "total_amount": 8.00,
+  "notes": "Pedido desde mesa",
+  "orderItems": [
+    {
+      "inventory_id": 2,
+      "quantity": 1,
+      "unit_price": 8.00,
+      "subtotal": 8.00
+    }
+  ]
+}
+```
+
+### 4.3 Listar Mis Pedidos (WAITER)
+```bash
+curl -X GET http://localhost:3000/api/orders/my-orders \
+  -H "Authorization: Bearer $WAITER_TOKEN"
+```
+
+**Output Esperado:**
+```json
+[
+  {
+    "id": 1,
+    "table_id": 1,
+    "status": "pending",
+    "total_amount": 17.00,
+    "notes": "Sin hielo en el mojito",
+    "created_at": "2025-09-22T...",
+    "table": {
+      "qr_code": "TABLE_001",
+      "capacity": 4
+    },
+    "orderItems": [...]
+  },
+  // ... solo pedidos del waiter logueado
+]
+```
+
+### 4.4 Pedidos Pendientes (BAR)
+```bash
+curl -X GET http://localhost:3000/api/orders/pending \
+  -H "Authorization: Bearer $BAR_TOKEN"
+```
+
+**Output Esperado:**
+```json
+[
+  {
+    "id": 1,
+    "table_id": 1,
+    "status": "pending",
+    "total_amount": 17.00,
+    "created_at": "2025-09-22T...",
+    "table": {
+      "qr_code": "TABLE_001"
+    },
+    "waiter": {
+      "user": {
+        "username": "waiter1"
+      }
+    },
+    "orderItems": [...]
+  }
+]
+```
+
+### 4.5 Confirmar Pedido (BAR)
+```bash
+curl -X PATCH http://localhost:3000/api/orders/1/confirm \
+  -H "Authorization: Bearer $BAR_TOKEN"
+```
+
+**Output Esperado:**
+```json
+{
+  "id": 1,
+  "status": "confirmed",
+  "message": "Pedido confirmado"
+}
+```
+
+### 4.6 Marcar Pedido Listo (BAR)
+```bash
+curl -X PATCH http://localhost:3000/api/orders/1/ready \
+  -H "Authorization: Bearer $BAR_TOKEN"
+```
+
+**Output Esperado:**
+```json
+{
+  "id": 1,
+  "status": "ready",
+  "message": "Pedido listo para entrega"
+}
+```
+
+### 4.7 Pedidos Listos para Entregar (WAITER)
+```bash
+curl -X GET http://localhost:3000/api/orders/ready \
+  -H "Authorization: Bearer $WAITER_TOKEN"
+```
+
+**Output Esperado:**
+```json
+[
+  {
+    "id": 2,
+    "table_id": 2,
+    "status": "ready",
+    "total_amount": 23.00,
+    "updated_at": "2025-09-22T...",
+    "table": {
+      "qr_code": "TABLE_002"
+    }
+  }
+]
+```
+
+### 4.8 Marcar Pedido Entregado (WAITER)
+```bash
+curl -X PATCH http://localhost:3000/api/orders/2/deliver \
+  -H "Authorization: Bearer $WAITER_TOKEN"
+```
+
+**Output Esperado:**
+```json
+{
+  "id": 2,
+  "status": "delivered",
+  "message": "Pedido entregado exitosamente"
+}
+```
+
+### 4.9 Pedidos por Mesa
+```bash
+curl -X GET http://localhost:3000/api/orders/table/1 \
+  -H "Authorization: Bearer $WAITER_TOKEN"
+```
+
+**Output Esperado:**
+```json
+[
+  {
+    "id": 1,
+    "table_id": 1,
+    "status": "delivered",
+    "total_amount": 17.00,
+    "created_at": "2025-09-22T...",
+    "orderItems": [...]
+  }
+]
+```
+
+## 5. Pruebas de Acceso Sin Autenticación
+
+### 5.1 Acceso a Endpoint Protegido sin Token
 ```bash
 curl -X GET http://localhost:3000/api/inventory
 ```
@@ -398,11 +746,12 @@ curl -X GET http://localhost:3000/api/inventory
 ```json
 {
   "statusCode": 401,
-  "message": "Unauthorized"
+  "message": "Unauthorized",
+  "error": "Unauthorized"
 }
 ```
 
-### 3.2 Token Inválido
+### 5.2 Token Inválido
 ```bash
 curl -X GET http://localhost:3000/api/inventory \
   -H "Authorization: Bearer token_invalido"
@@ -412,33 +761,66 @@ curl -X GET http://localhost:3000/api/inventory \
 ```json
 {
   "statusCode": 401,
-  "message": "Unauthorized"
+  "message": "Unauthorized",
+  "error": "Unauthorized"
 }
 ```
 
-## 4. Validaciones de Datos
+## 6. Pruebas de Validaciones
 
-### 4.1 Login con Username Inválido
+### 6.1 Crear Pedido sin Items
 ```bash
-curl -X POST http://localhost:3000/api/auth/login \
+curl -X POST http://localhost:3000/api/orders \
+  -H "Authorization: Bearer $WAITER_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"username": "", "password": "123"}'
+  -d '{
+    "table_id": 1,
+    "items": []
+  }'
 ```
 
 **Output Esperado:**
 ```json
 {
   "statusCode": 400,
-  "message": ["username should not be empty"],
+  "message": ["items should not be empty"],
   "error": "Bad Request"
 }
 ```
 
-### 4.2 Registro con Datos Faltantes
+### 6.2 Crear Pedido con Producto No Disponible
 ```bash
-curl -X POST http://localhost:3000/api/auth/register \
+curl -X POST http://localhost:3000/api/orders \
+  -H "Authorization: Bearer $WAITER_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"username": "test"}'
+  -d '{
+    "table_id": 1,
+    "items": [
+      {
+        "inventory_id": 999,
+        "quantity": 1
+      }
+    ]
+  }'
+```
+
+**Output Esperado:**
+```json
+{
+  "statusCode": 404,
+  "message": "Producto con ID 999 no encontrado",
+  "error": "Not Found"
+}
+```
+
+### 6.3 Crear Item sin Datos Requeridos
+```bash
+curl -X POST http://localhost:3000/api/inventory \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sellPrice": 10.00
+  }'
 ```
 
 **Output Esperado:**
@@ -446,33 +828,150 @@ curl -X POST http://localhost:3000/api/auth/register \
 {
   "statusCode": 400,
   "message": [
-    "password should not be empty",
-    "role should not be empty"
+    "name should not be empty",
+    "name must be a string",
+    "category should not be empty",
+    "barId must be a number conforming to the specified constraints"
   ],
   "error": "Bad Request"
 }
 ```
 
-## 5. Resumen de Validaciones Importantes
+### 6.4 Buscar Mesa con QR Inexistente
+```bash
+curl -X GET http://localhost:3000/api/tables/qr/TABLE_999 \
+  -H "Authorization: Bearer $TOKEN"
+```
 
-### ✅ Funcionalidades que DEBEN funcionar:
-1. **Login exitoso** con usuarios del seeding
-2. **Roles correctos** en respuestas de autenticación
-3. **Control de acceso**: BAR no ve `costPrice` en inventario
-4. **Permisos**: Solo ADMIN puede crear/editar items
-5. **Tokens JWT** válidos en todas las respuestas de auth
-6. **Filtros**: endpoints `/available` y `/low-stock` funcionando
-7. **Actualización de stock** permitida para ADMIN y BAR
-8. **Validaciones** de datos en todos los endpoints
+**Output Esperado:**
+```json
+{
+  "statusCode": 404,
+  "message": "Mesa con QR TABLE_999 no encontrada",
+  "error": "Not Found"
+}
+```
 
-### ❌ Casos que DEBEN fallar:
-1. **Login** con credenciales incorrectas
-2. **Acceso** sin token de autenticación
-3. **Creación de items** por usuarios BAR o WAITER
-4. **Tokens inválidos** o expirados
-5. **Datos malformados** en requests
+## 7. Flujo Completo de Pedido
 
-## 6. Comandos Útiles para Testing
+### 7.1 Escenario: Pedido desde QR hasta Entrega
+
+#### Paso 1: Cliente escanea QR y hace pedido
+```bash
+curl -X POST http://localhost:3000/api/orders/qr/TABLE_005 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {
+        "inventory_id": 1,
+        "quantity": 2
+      },
+      {
+        "inventory_id": 3,
+        "quantity": 1
+      }
+    ],
+    "notes": "Mesa de la esquina"
+  }'
+```
+
+#### Paso 2: Bartender ve pedidos pendientes
+```bash
+curl -X GET http://localhost:3000/api/orders/pending \
+  -H "Authorization: Bearer $BAR_TOKEN"
+```
+
+#### Paso 3: Bartender confirma el pedido
+```bash
+curl -X PATCH http://localhost:3000/api/orders/[ID_DEL_PEDIDO]/confirm \
+  -H "Authorization: Bearer $BAR_TOKEN"
+```
+
+#### Paso 4: Bartender marca pedido como preparando
+```bash
+curl -X PATCH http://localhost:3000/api/orders/[ID_DEL_PEDIDO]/preparing \
+  -H "Authorization: Bearer $BAR_TOKEN"
+```
+
+#### Paso 5: Bartender marca pedido listo
+```bash
+curl -X PATCH http://localhost:3000/api/orders/[ID_DEL_PEDIDO]/ready \
+  -H "Authorization: Bearer $BAR_TOKEN"
+```
+
+#### Paso 6: Waiter ve pedidos listos
+```bash
+curl -X GET http://localhost:3000/api/orders/ready \
+  -H "Authorization: Bearer $WAITER_TOKEN"
+```
+
+#### Paso 7: Waiter entrega el pedido
+```bash
+curl -X PATCH http://localhost:3000/api/orders/[ID_DEL_PEDIDO]/deliver \
+  -H "Authorization: Bearer $WAITER_TOKEN"
+```
+
+## 8. Verificación del Sistema
+
+### 8.1 Verificar Estado del Inventario después de Pedidos
+```bash
+curl -X GET http://localhost:3000/api/inventory \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+```
+
+**Verificar que:**
+- Los `stockQuantity` se redujeron según las cantidades pedidas
+- Los productos siguen disponibles si hay stock suficiente
+
+### 8.2 Verificar Estado de las Mesas
+```bash
+curl -X GET http://localhost:3000/api/tables \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+```
+
+**Verificar que:**
+- Mesa 1: status = "occupied" (tiene pedido activo)
+- Mesa 2: status = "occupied" (tiene pedido listo)
+- Mesas 3-10: status = "available"
+
+### 8.3 Verificar Estado de Pedidos
+```bash
+curl -X GET http://localhost:3000/api/orders \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+```
+
+**Verificar que:**
+- Pedido 1: status = "pending" 
+- Pedido 2: status = "ready"
+- Nuevos pedidos creados durante las pruebas
+
+## 9. Notas Importantes
+
+### Estados de Pedidos:
+- **PENDING**: Recién creado, esperando confirmación del bar
+- **CONFIRMED**: Confirmado por el bar, va a prepararse
+- **PREPARING**: En preparación por el bar
+- **READY**: Listo para entrega por el waiter
+- **DELIVERED**: Entregado al cliente
+
+### Estados de Mesas:
+- **AVAILABLE**: Disponible para nuevos clientes
+- **OCCUPIED**: Ocupada con clientes
+- **RESERVED**: Reservada 
+- **CLEANING**: En proceso de limpieza
+- **OUT_OF_SERVICE**: Fuera de servicio
+
+### Roles y Permisos:
+- **ADMIN**: Acceso completo a todo el sistema
+- **BAR**: Gestión de inventario (sin costos), pedidos pendientes, preparación
+- **WAITER**: Sus mesas asignadas, crear pedidos, entregar pedidos listos
+
+### Automatizaciones:
+- Stock se reduce automáticamente al crear pedidos
+- Mesas cambian a "occupied" cuando tienen pedidos activos
+- Solo productos con stock disponible pueden ordenarse
+
+## 10. Comandos Útiles para Testing
 
 ### Obtener y usar tokens:
 ```bash
@@ -488,6 +987,12 @@ BAR_TOKEN=$(curl -s -X POST http://localhost:3000/api/auth/login \
   -d '{"username": "baruser1", "password": "bar123"}' | \
   jq -r '.access_token')
 
+# Obtener token de waiter1
+WAITER_TOKEN=$(curl -s -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "waiter1", "password": "waiter123"}' | \
+  jq -r '.access_token')
+
 # Usar el token
 curl -X GET http://localhost:3000/api/inventory \
   -H "Authorization: Bearer $ADMIN_TOKEN"
@@ -498,4 +1003,4 @@ curl -X GET http://localhost:3000/api/inventory \
 curl -I http://localhost:3000/api/auth/login
 ```
 
-Esta guía te permitirá validar completamente la funcionalidad del sistema BarFlow y confirmar que todos los controles de acceso y validaciones están funcionando correctamente.
+Esta guía te permitirá validar completamente la funcionalidad del sistema BarFlow Fase 2, incluyendo toda la gestión de mesas, pedidos con workflow completo, y verificar que todos los controles de acceso y validaciones están funcionando correctamente.
