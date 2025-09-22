@@ -4,8 +4,10 @@ import { AppModule } from '../app.module';
 import { User, UserRole } from '../users/user.entity';
 import { Bar } from '../bars/bar.entity';
 import { Waiter } from '../waiters/waiter.entity';
-import { Table } from '../tables/table.entity';
+import { Table, TableStatus } from '../tables/table.entity';
 import { Inventory } from '../inventory/inventory.entity';
+import { Order, OrderStatus } from '../orders/order.entity';
+import { OrderItem } from '../orders/order-item.entity';
 import * as bcrypt from 'bcryptjs';
 
 async function seed() {
@@ -16,6 +18,8 @@ async function seed() {
   const waiterRepository = app.get(getRepositoryToken(Waiter));
   const tableRepository = app.get(getRepositoryToken(Table));
   const inventoryRepository = app.get(getRepositoryToken(Inventory));
+  const orderRepository = app.get(getRepositoryToken(Order));
+  const orderItemRepository = app.get(getRepositoryToken(OrderItem));
 
   // Clear existing data in correct order (respecting foreign key constraints)
   console.log('Clearing existing data...');
@@ -103,6 +107,9 @@ async function seed() {
     const table = tableRepository.create({
       qr_code: `TABLE_${i.toString().padStart(3, '0')}`,
       waiter_id: i <= 5 ? waiter1.id : waiter2.id,
+      status: i <= 2 ? TableStatus.OCCUPIED : TableStatus.AVAILABLE,
+      capacity: Math.floor(Math.random() * 6) + 2, // 2-8 personas
+      location: i <= 5 ? 'Main Floor' : 'VIP Area',
     });
     tables.push(table);
   }
@@ -163,6 +170,51 @@ async function seed() {
     await inventoryRepository.save(inventoryItem);
   }
 
+  // Create sample orders
+  console.log('Creating sample orders...');
+  const sampleOrders = [
+    {
+      table_id: tables[0].id, // Mesa ocupada
+      waiter_id: waiter1.id,
+      bar_id: mainBar.id,
+      status: OrderStatus.PENDING,
+      total_amount: 17.00,
+      notes: 'Sin hielo en el mojito',
+      items: [
+        { inventory_id: 1, quantity: 2, unit_price: 5.00 }, // 2 Corona
+        { inventory_id: 3, quantity: 1, unit_price: 12.00 }, // 1 Mojito
+      ]
+    },
+    {
+      table_id: tables[1].id, // Mesa ocupada
+      waiter_id: waiter1.id,
+      bar_id: mainBar.id,
+      status: OrderStatus.READY,
+      total_amount: 23.00,
+      notes: 'Mesa VIP',
+      items: [
+        { inventory_id: 2, quantity: 1, unit_price: 8.00 }, // 1 Vodka Shot
+        { inventory_id: 4, quantity: 1, unit_price: 15.00 }, // 1 Red Wine
+      ]
+    }
+  ];
+
+  for (const orderData of sampleOrders) {
+    const { items, ...orderInfo } = orderData;
+    
+    const order = orderRepository.create(orderInfo);
+    const savedOrder = await orderRepository.save(order);
+
+    for (const item of items) {
+      const orderItem = orderItemRepository.create({
+        ...item,
+        order_id: savedOrder.id,
+        subtotal: item.unit_price * item.quantity,
+      });
+      await orderItemRepository.save(orderItem);
+    }
+  }
+
   console.log('Seeding completed successfully!');
   console.log('\nCreated users:');
   console.log('- Admin: username="admin", password="admin123"');
@@ -173,8 +225,9 @@ async function seed() {
   console.log('\nCreated:');
   console.log('- 2 bars (Main Bar, VIP Bar)');
   console.log('- 2 waiters assigned to bars');
-  console.log('- 10 tables with QR codes');
+  console.log('- 10 tables with QR codes (2 occupied, 8 available)');
   console.log('- 5 inventory items with different categories');
+  console.log('- 2 sample orders (1 pending, 1 ready)');
 
   await app.close();
 }
