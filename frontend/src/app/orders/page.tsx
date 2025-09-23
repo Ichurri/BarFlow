@@ -1,0 +1,279 @@
+'use client';
+
+import { useAuth } from '@/contexts/AuthContext';
+import Layout from '@/components/Layout';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ordersApi } from '@/lib/api';
+import { formatCurrency, getStatusColor, cn } from '@/lib/utils';
+import { CheckIcon, ClockIcon, XMarkIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { Order } from '@/types';
+
+const statusConfig = {
+  pending: {
+    label: 'Pending',
+    color: 'yellow',
+    icon: ClockIcon,
+  },
+  preparing: {
+    label: 'Preparing',
+    color: 'blue',
+    icon: ClockIcon,
+  },
+  ready: {
+    label: 'Ready',
+    color: 'green',
+    icon: CheckIcon,
+  },
+  delivered: {
+    label: 'Delivered',
+    color: 'gray',
+    icon: CheckIcon,
+  },
+  cancelled: {
+    label: 'Cancelled',
+    color: 'red',
+    icon: XMarkIcon,
+  },
+};
+
+function OrderCard({ order }: { order: Order }) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ orderId, status }: { orderId: number; status: Order['status'] }) =>
+      ordersApi.updateStatus(orderId, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+
+  const config = statusConfig[order.status as keyof typeof statusConfig];
+  const IconComponent = config?.icon || ClockIcon;
+
+  const canUpdateStatus = () => {
+    if (user?.role === 'admin') return true;
+    if (user?.role === 'bar' && ['pending', 'preparing', 'ready'].includes(order.status)) return true;
+    if (user?.role === 'waiter' && order.status === 'ready') return true;
+    return false;
+  };
+
+  const getNextStatus = () => {
+    switch (order.status) {
+      case 'pending':
+        return 'preparing';
+      case 'preparing':
+        return 'ready';
+      case 'ready':
+        return 'delivered';
+      default:
+        return null;
+    }
+  };
+
+  const nextStatus = getNextStatus();
+
+  return (
+    <div className="bg-white overflow-hidden shadow rounded-lg">
+      <div className="px-4 py-5 sm:p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <IconComponent className={cn(
+                'h-8 w-8',
+                getStatusColor(order.status, 'text')
+              )} />
+            </div>
+            <div className="ml-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Order #{order.id}
+              </h3>
+              <p className="text-sm text-gray-500">
+                Table {order.table?.id || order.table_id} • {new Date(order.created_at).toLocaleTimeString()}
+              </p>
+            </div>
+          </div>
+          <span className={cn(
+            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+            getStatusColor(order.status, 'badge')
+          )}>
+            {config?.label || order.status}
+          </span>
+        </div>
+
+        <div className="mt-4">
+          <h4 className="text-sm font-medium text-gray-900 mb-2">Items:</h4>
+          <ul className="space-y-1">
+            {order.items?.map((item, index) => (
+              <li key={index} className="flex justify-between text-sm">
+                <span className="text-gray-600">
+                  {item.quantity}x {item.inventory?.name || `Item ${item.inventory_id}`}
+                </span>
+                <span className="text-gray-900">
+                  {formatCurrency((item.unit_price || item.price) * item.quantity)}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-2 pt-2 border-t border-gray-200">
+            <div className="flex justify-between text-sm font-medium">
+              <span>Total:</span>
+              <span>{formatCurrency(order.total_amount)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-between items-center">
+          <div className="text-sm text-gray-500">
+            {order.waiter?.user?.username && `Waiter: ${order.waiter.user.username}`}
+          </div>
+          <div className="flex space-x-2">
+            {canUpdateStatus() && nextStatus && (
+              <button
+                onClick={() => updateStatusMutation.mutate({
+                  orderId: order.id,
+                  status: nextStatus
+                })}
+                disabled={updateStatusMutation.isPending}
+                className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
+              >
+                {updateStatusMutation.isPending ? 'Updating...' : `Mark as ${statusConfig[nextStatus as keyof typeof statusConfig]?.label}`}
+              </button>
+            )}
+            {user?.role === 'admin' && order.status === 'pending' && (
+              <button
+                onClick={() => updateStatusMutation.mutate({
+                  orderId: order.id,
+                  status: 'cancelled'
+                })}
+                disabled={updateStatusMutation.isPending}
+                className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function OrdersPage() {
+  const { user } = useAuth();
+
+  const { data: orders, isLoading } = useQuery({
+    queryKey: ['orders'],
+    queryFn: ordersApi.getAll,
+  });
+
+  const { data: pendingOrders } = useQuery({
+    queryKey: ['orders', 'pending'],
+    queryFn: ordersApi.getPending,
+    refetchInterval: 5000, // Refresh every 5 seconds
+  });
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Filter orders based on user role
+  const filteredOrders = orders?.filter(order => {
+    if (user?.role === 'admin') return true;
+    if (user?.role === 'bar') return ['pending', 'preparing', 'ready'].includes(order.status);
+    if (user?.role === 'waiter') return order.waiter_id === user.id || order.status === 'ready';
+    return false;
+  }) || [];
+
+  // Group orders by status
+  const ordersByStatus = filteredOrders.reduce((acc, order) => {
+    if (!acc[order.status]) {
+      acc[order.status] = [];
+    }
+    acc[order.status].push(order);
+    return acc;
+  }, {} as Record<string, Order[]>);
+
+  return (
+    <Layout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Orders Management</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            {user?.role === 'bar' ? 'Prepare and manage drink orders' : 
+             user?.role === 'waiter' ? 'View and deliver orders' : 
+             'Monitor all orders and operations'}
+          </p>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {Object.entries(ordersByStatus).map(([status, statusOrders]) => {
+            const config = statusConfig[status as keyof typeof statusConfig];
+            return (
+              <div key={status} className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className={cn(
+                        'h-8 w-8 rounded-md flex items-center justify-center',
+                        getStatusColor(status, 'bg')
+                      )}>
+                        {config?.icon && (
+                          <config.icon className="h-5 w-5 text-white" />
+                        )}
+                      </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">
+                          {config?.label || status}
+                        </dt>
+                        <dd className="text-lg font-medium text-gray-900">
+                          {statusOrders.length}
+                        </dd>
+                      </dl>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Orders List */}
+        {filteredOrders.length > 0 ? (
+          <div className="space-y-4">
+            {Object.entries(ordersByStatus).map(([status, statusOrders]) => (
+              <div key={status}>
+                <h3 className="text-lg font-medium text-gray-900 mb-3">
+                  {statusConfig[status as keyof typeof statusConfig]?.label || status} Orders
+                </h3>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {statusOrders.map((order) => (
+                    <OrderCard key={order.id} order={order} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <ClockIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No orders</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              No orders found for your role.
+            </p>
+          </div>
+        )}
+      </div>
+    </Layout>
+  );
+}
