@@ -25,6 +25,9 @@ export class PaymentLog {
   @Column()
   user_id: number;
 
+  @Column({ type: 'text', nullable: true })
+  notes: string;
+
   @CreateDateColumn()
   created_at: Date;
 

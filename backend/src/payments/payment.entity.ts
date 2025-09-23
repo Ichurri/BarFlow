@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToOne, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { Order } from '../orders/order.entity';
 import { User } from '../users/user.entity';
 import { PaymentLog } from './payment-log.entity';
@@ -43,6 +43,9 @@ export class Payment {
 
   @CreateDateColumn()
   created_at: Date;
+
+  @UpdateDateColumn()
+  updated_at: Date;
 
   // Relations
   @OneToOne(() => Order, order => order.payment)
