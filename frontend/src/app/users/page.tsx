@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/Layout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { usersApi } from '@/lib/api';
 import { formatDate, getRoleColor, cn } from '@/lib/utils';
 import { 
   PlusIcon, 
@@ -14,71 +15,11 @@ import {
   EyeSlashIcon
 } from '@heroicons/react/24/outline';
 
-// Mock API for users - replace with real API calls
-const usersApi = {
-  getAll: async (): Promise<User[]> => {
-    // Simulate API call
-    return [
-      {
-        id: 1,
-        username: 'admin',
-        role: 'admin' as const,
-        created_at: '2024-01-01T00:00:00Z',
-        last_login: '2024-12-20T10:30:00Z',
-        status: 'active' as const
-      },
-      {
-        id: 2,
-        username: 'baruser1',
-        role: 'bar' as const,
-        created_at: '2024-01-02T00:00:00Z',
-        last_login: '2024-12-20T09:15:00Z',
-        status: 'active' as const
-      },
-      {
-        id: 3,
-        username: 'waiter1',
-        role: 'waiter' as const,
-        created_at: '2024-01-03T00:00:00Z',
-        last_login: '2024-12-19T18:45:00Z',
-        status: 'active' as const
-      },
-      {
-        id: 4,
-        username: 'waiter2',
-        role: 'waiter' as const,
-        created_at: '2024-01-04T00:00:00Z',
-        last_login: '2024-12-18T16:20:00Z',
-        status: 'inactive' as const
-      }
-    ];
-  },
-  
-  create: async (userData: any) => {
-    // Simulate API call
-    console.log('Creating user:', userData);
-    return { id: Date.now(), ...userData, created_at: new Date().toISOString() };
-  },
-  
-  update: async (id: number, userData: any) => {
-    // Simulate API call
-    console.log('Updating user:', id, userData);
-    return { id, ...userData };
-  },
-  
-  delete: async (id: number) => {
-    // Simulate API call
-    console.log('Deleting user:', id);
-  }
-};
-
-interface User {
+interface UserType {
   id: number;
   username: string;
   role: 'admin' | 'bar' | 'waiter';
   created_at: string;
-  last_login?: string;
-  status: 'active' | 'inactive';
 }
 
 interface CreateUserForm {
@@ -87,8 +28,15 @@ interface CreateUserForm {
   role: 'admin' | 'bar' | 'waiter';
 }
 
-function UserCard({ user }: { user: User }) {
+interface EditUserForm {
+  username?: string;
+  password?: string;
+  role?: 'admin' | 'bar' | 'waiter';
+}
+
+function UserCard({ user }: { user: UserType }) {
   const queryClient = useQueryClient();
+  const [showEditModal, setShowEditModal] = useState(false);
   
   const deleteUserMutation = useMutation({
     mutationFn: (userId: number) => usersApi.delete(userId),
@@ -103,73 +51,73 @@ function UserCard({ user }: { user: User }) {
     }
   };
 
-  return (
-    <div className="bg-white overflow-hidden shadow rounded-lg">
-      <div className="px-4 py-5 sm:p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                <UserIcon className="h-6 w-6 text-gray-600" />
-              </div>
-            </div>
-            <div className="ml-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                {user.username}
-              </h3>
-              <div className="flex items-center space-x-2">
-                <span className={cn(
-                  'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                  getRoleColor(user.role)
-                )}>
-                  {user.role.toUpperCase()}
-                </span>
-                <span className={cn(
-                  'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                  user.status === 'active' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                )}>
-                  {user.status}
-                </span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <button
-              className="text-gray-400 hover:text-gray-500"
-              title="Edit user"
-            >
-              <PencilIcon className="h-5 w-5" />
-            </button>
-            {user.id !== 1 && ( // Don't allow deleting main admin
-              <button
-                onClick={handleDelete}
-                disabled={deleteUserMutation.isPending}
-                className="text-red-400 hover:text-red-500 disabled:opacity-50"
-                title="Delete user"
-              >
-                <TrashIcon className="h-5 w-5" />
-              </button>
-            )}
-          </div>
-        </div>
+  const handleEdit = () => {
+    setShowEditModal(true);
+  };
 
-        <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <dt className="font-medium text-gray-500">Created</dt>
-            <dd className="text-gray-900">{formatDate(user.created_at)}</dd>
+  return (
+    <>
+      <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div className="px-4 py-5 sm:p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                  <UserIcon className="h-6 w-6 text-gray-600" />
+                </div>
+              </div>
+              <div className="ml-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  {user.username}
+                </h3>
+                <div className="flex items-center space-x-2">
+                  <span className={cn(
+                    'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                    getRoleColor(user.role)
+                  )}>
+                    {user.role.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={handleEdit}
+                className="text-gray-400 hover:text-gray-500"
+                title="Edit user"
+              >
+                <PencilIcon className="h-5 w-5" />
+              </button>
+              {user.id !== 1 && ( // Don't allow deleting main admin
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteUserMutation.isPending}
+                  className="text-red-400 hover:text-red-500 disabled:opacity-50"
+                  title="Delete user"
+                >
+                  <TrashIcon className="h-5 w-5" />
+                </button>
+              )}
+            </div>
           </div>
-          <div>
-            <dt className="font-medium text-gray-500">Last Login</dt>
-            <dd className="text-gray-900">
-              {user.last_login ? formatDate(user.last_login) : 'Never'}
-            </dd>
+
+          <div className="mt-4 text-sm">
+            <div>
+              <dt className="font-medium text-gray-500">Created</dt>
+              <dd className="text-gray-900">{formatDate(user.created_at)}</dd>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Edit User Modal */}
+      <EditUserModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        user={user}
+      />
+    </>
   );
 }
 
@@ -180,6 +128,7 @@ function CreateUserModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
     role: 'waiter'
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
   const queryClient = useQueryClient();
 
   const createUserMutation = useMutation({
@@ -188,11 +137,16 @@ function CreateUserModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
       queryClient.invalidateQueries({ queryKey: ['users'] });
       onClose();
       setFormData({ username: '', password: '', role: 'waiter' });
+      setError('');
     },
+    onError: (error: any) => {
+      setError(error.response?.data?.message || 'Failed to create user');
+    }
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     createUserMutation.mutate(formData);
   };
 
@@ -203,6 +157,12 @@ function CreateUserModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
       <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div className="mt-3">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Create New User</h3>
+          
+          {error && (
+            <div className="mb-4 text-red-600 text-sm bg-red-50 p-3 rounded-md">
+              {error}
+            </div>
+          )}
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -278,6 +238,129 @@ function CreateUserModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   );
 }
 
+function EditUserModal({ isOpen, onClose, user }: { isOpen: boolean; onClose: () => void; user: UserType }) {
+  const [formData, setFormData] = useState<EditUserForm>({
+    username: user.username,
+    password: '',
+    role: user.role
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const queryClient = useQueryClient();
+
+  const updateUserMutation = useMutation({
+    mutationFn: (userData: EditUserForm) => {
+      // Remove empty password from update data
+      const updateData = { ...userData };
+      if (!updateData.password) {
+        delete updateData.password;
+      }
+      return usersApi.update(user.id, updateData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      onClose();
+      setError('');
+    },
+    onError: (error: any) => {
+      setError(error.response?.data?.message || 'Failed to update user');
+    }
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    updateUserMutation.mutate(formData);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="mt-3">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Edit User</h3>
+          
+          {error && (
+            <div className="mb-4 text-red-600 text-sm bg-red-50 p-3 rounded-md">
+              {error}
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Username</label>
+              <input
+                type="text"
+                required
+                value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                placeholder="Enter username"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <div className="relative mt-1">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="Leave empty to keep current password"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Leave empty to keep current password</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Role</label>
+              <select
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+              >
+                <option value="waiter">Waiter</option>
+                <option value="bar">Bar Staff</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+
+            <div className="flex items-center justify-end space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={updateUserMutation.isPending}
+                className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md disabled:opacity-50"
+              >
+                {updateUserMutation.isPending ? 'Updating...' : 'Update User'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function UsersPage() {
   const { user } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -304,7 +387,7 @@ export default function UsersPage() {
     }
     acc[user.role].push(user);
     return acc;
-  }, {} as Record<string, User[]>) || {};
+  }, {} as Record<string, UserType[]>) || {};
 
   return (
     <Layout>

@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/Layout';
+import QRModal from '@/components/QRModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tablesApi } from '@/lib/api';
 import { getStatusColor, cn } from '@/lib/utils';
@@ -11,7 +13,8 @@ import {
   CheckIcon, 
   XMarkIcon,
   WrenchScrewdriverIcon,
-  MapPinIcon
+  MapPinIcon,
+  QrCodeIcon
 } from '@heroicons/react/24/outline';
 import { Table } from '@/types';
 
@@ -46,6 +49,7 @@ const statusConfig = {
 function TableCard({ table }: { table: Table }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [showQRModal, setShowQRModal] = useState(false);
   
   const updateStatusMutation = useMutation({
     mutationFn: ({ tableId, status }: { tableId: number; status: Table['status'] }) =>
@@ -110,6 +114,19 @@ function TableCard({ table }: { table: Table }) {
           </div>
         </div>
 
+        <div className="mt-4 flex items-center justify-between">
+          <div className="text-xs text-gray-400">
+            QR Code: {table.qr_code}
+          </div>
+          <button
+            onClick={() => setShowQRModal(true)}
+            className="inline-flex items-center px-3 py-1 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100"
+          >
+            <QrCodeIcon className="h-4 w-4 mr-1" />
+            Show QR
+          </button>
+        </div>
+
         {canChangeStatus() && (
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -140,11 +157,14 @@ function TableCard({ table }: { table: Table }) {
             </div>
           </div>
         )}
-
-        <div className="mt-4 text-xs text-gray-400">
-          QR Code: {table.qr_code}
-        </div>
       </div>
+      
+      <QRModal
+        isOpen={showQRModal}
+        onClose={() => setShowQRModal(false)}
+        tableId={table.id}
+        tableName={`Table #${table.id}`}
+      />
     </div>
   );
 }
