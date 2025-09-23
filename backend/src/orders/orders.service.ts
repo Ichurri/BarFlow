@@ -260,13 +260,30 @@ export class OrdersService {
     await this.ordersRepository.remove(order);
   }
 
+  async requestPayment(orderId: number, user: any): Promise<Order> {
+    const order = await this.findOne(orderId, user);
+
+    if (order.status !== OrderStatus.DELIVERED) {
+      throw new BadRequestException('La orden debe estar entregada para solicitar pago');
+    }
+
+    // Actualizar estado a PAYMENT_PENDING
+    await this.ordersRepository.update(orderId, {
+      status: OrderStatus.PAYMENT_PENDING,
+    });
+
+    return this.findOne(orderId, user);
+  }
+
   private isValidStatusTransition(currentStatus: OrderStatus, newStatus: OrderStatus): boolean {
     const validTransitions: Record<OrderStatus, OrderStatus[]> = {
       [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
       [OrderStatus.CONFIRMED]: [OrderStatus.PREPARING, OrderStatus.CANCELLED],
       [OrderStatus.PREPARING]: [OrderStatus.READY, OrderStatus.CANCELLED],
       [OrderStatus.READY]: [OrderStatus.DELIVERED],
-      [OrderStatus.DELIVERED]: [],
+      [OrderStatus.DELIVERED]: [OrderStatus.PAYMENT_PENDING],
+      [OrderStatus.PAYMENT_PENDING]: [OrderStatus.COMPLETED, OrderStatus.DELIVERED],
+      [OrderStatus.COMPLETED]: [],
       [OrderStatus.CANCELLED]: [],
     };
 

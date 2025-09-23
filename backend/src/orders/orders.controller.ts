@@ -88,6 +88,13 @@ export class OrdersController {
     return this.ordersService.markDelivered(+id, req.user);
   }
 
+  @Patch(':id/request-payment')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.WAITER, UserRole.ADMIN)
+  requestPayment(@Param('id') id: string, @Request() req) {
+    return this.ordersService.requestPayment(+id, req.user);
+  }
+
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
