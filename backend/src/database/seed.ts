@@ -8,6 +8,8 @@ import { Table, TableStatus } from '../tables/table.entity';
 import { Inventory } from '../inventory/inventory.entity';
 import { Order, OrderStatus } from '../orders/order.entity';
 import { OrderItem } from '../orders/order-item.entity';
+import { Payment, PaymentStatus, PaymentMethod } from '../payments/payment.entity';
+import { PaymentLog, PaymentLogAction } from '../payments/payment-log.entity';
 import * as bcrypt from 'bcryptjs';
 
 async function seed() {
@@ -20,6 +22,8 @@ async function seed() {
   const inventoryRepository = app.get(getRepositoryToken(Inventory));
   const orderRepository = app.get(getRepositoryToken(Order));
   const orderItemRepository = app.get(getRepositoryToken(OrderItem));
+  const paymentRepository = app.get(getRepositoryToken(Payment));
+  const paymentLogRepository = app.get(getRepositoryToken(PaymentLog));
 
   // Clear existing data in correct order (respecting foreign key constraints)
   console.log('Clearing existing data...');
@@ -216,6 +220,59 @@ async function seed() {
     }
   }
 
+  // Crear algunos pagos de ejemplo
+  const samplePayments = [
+    {
+      order_id: (await orderRepository.find())[0]?.id,
+      method: 'cash',
+      total_amount: 32.00,
+      status: 'pending',
+      created_by: waiterUser1.id,
+    },
+    {
+      order_id: (await orderRepository.find())[1]?.id,
+      method: 'cash', 
+      total_amount: 23.00,
+      status: 'verified',
+      created_by: waiterUser2.id,
+      verified_by: barUser1.id,
+    }
+  ];
+
+  const savedPayments = [];
+  for (const paymentData of samplePayments) {
+    const payment = paymentRepository.create(paymentData);
+    const savedPayment = await paymentRepository.save(payment);
+    savedPayments.push(savedPayment);
+  }
+
+  // Crear logs de ejemplo para los pagos
+  const samplePaymentLogs = [
+    {
+      payment_id: savedPayments[0].id,
+      action: 'created',
+      user_id: waiterUser1.id,
+      notes: 'Pago iniciado por mesero para mesa 1'
+    },
+    {
+      payment_id: savedPayments[1].id,
+      action: 'created',
+      user_id: waiterUser2.id,
+      notes: 'Pago iniciado por mesero para mesa VIP'
+    },
+    {
+      payment_id: savedPayments[1].id,
+      action: 'verified',
+      user_id: barUser1.id,
+      notes: 'Pago verificado por la barra - efectivo recibido correctamente'
+    }
+  ];
+
+  for (const logData of samplePaymentLogs) {
+    const paymentLog = paymentLogRepository.create(logData);
+    await paymentLogRepository.save(paymentLog);
+  }
+
   console.log('Seeding completed successfully!');
   console.log('\nCreated users:');
   console.log('- Admin: username="admin", password="admin123"');
@@ -229,6 +286,8 @@ async function seed() {
   console.log('- 10 tables with QR codes (2 occupied, 8 available)');
   console.log('- 5 inventory items with different categories');
   console.log('- 2 sample orders (1 pending, 1 ready)');
+  console.log('- 2 sample payments (1 pending, 1 verified)');
+  console.log('- 3 payment logs for tracking verification history');
 
   await app.close();
 }
