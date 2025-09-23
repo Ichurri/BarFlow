@@ -13,7 +13,8 @@ import {
 import { InventoryService } from './inventory.service';
 import { CreateInventoryDto, UpdateInventoryDto } from './dto/inventory.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard, Roles } from '../auth/roles.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../users/user.entity';
 
 @Controller('inventory')
