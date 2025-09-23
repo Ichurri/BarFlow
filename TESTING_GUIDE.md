@@ -1,4 +1,4 @@
-# BarFlow - Guía de Pruebas API - Fase 2
+# BarFlow - Guía de Pruebas API - Fase 3 MVP
 
 ## Prerrequisitos
 1. Servidor ejecutándose: `cd backend && npm run start:dev`
@@ -27,6 +27,8 @@ Después de ejecutar `npm run seed`, se crean los siguientes usuarios:
   4. Red Wine Glass (Wine) - $15.00
   5. Whiskey Neat (Spirits) - $20.00
 - **2 Pedidos de Ejemplo**: 1 pendiente, 1 listo para entrega
+- **2 Pagos de Ejemplo**: 1 pendiente, 1 verificado
+- **3 Logs de Pago** para seguimiento de verificaciones
 
 ## 1. Pruebas de Autenticación
 
@@ -945,7 +947,216 @@ curl -X GET http://localhost:3000/api/orders \
 - Pedido 2: status = "ready"
 - Nuevos pedidos creados durante las pruebas
 
-## 9. Notas Importantes
+## 9. Pruebas del Sistema de Pagos (Fase 3 MVP)
+
+### 9.1 Solicitar Pago (WAITER)
+**Descripción**: El waiter solicita pago para una orden entregada
+```bash
+curl -X POST http://localhost:3000/api/payments/request \
+  -H "Authorization: Bearer $WAITER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "order_id": 1,
+    "method": "CASH"
+  }'
+```
+
+**Output Esperado:**
+```json
+{
+  "id": 3,
+  "order_id": 1,
+  "method": "CASH",
+  "total_amount": 17.00,
+  "status": "PENDING",
+  "created_by": 4,
+  "created_at": "2024-01-15T10:30:00.000Z",
+  "updated_at": "2024-01-15T10:30:00.000Z"
+}
+```
+
+### 9.2 Ver Pagos Pendientes (BAR)
+**Descripción**: El bar consulta todos los pagos pendientes de verificación
+```bash
+curl -X GET http://localhost:3000/api/payments/pending \
+  -H "Authorization: Bearer $BAR_TOKEN"
+```
+
+**Output Esperado:**
+```json
+[
+  {
+    "id": 1,
+    "order_id": 1,
+    "method": "CASH",
+    "total_amount": 32.00,
+    "status": "PENDING",
+    "created_by": 4,
+    "created_at": "2024-01-15T10:00:00.000Z",
+    "order": {
+      "id": 1,
+      "table_id": 1,
+      "status": "PAYMENT_PENDING",
+      "table": {
+        "qr_code": "TABLE_001",
+        "location": "Main Floor"
+      }
+    },
+    "creator": {
+      "username": "waiter1"
+    }
+  }
+]
+```
+
+### 9.3 Verificar Pago (BAR)
+**Descripción**: El bar verifica un pago después de recibir el efectivo
+```bash
+curl -X PATCH http://localhost:3000/api/payments/1/verify \
+  -H "Authorization: Bearer $BAR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "notes": "Efectivo recibido correctamente - $32.00"
+  }'
+```
+
+**Output Esperado:**
+```json
+{
+  "id": 1,
+  "order_id": 1,
+  "method": "CASH",
+  "total_amount": 32.00,
+  "status": "VERIFIED",
+  "created_by": 4,
+  "verified_by": 2,
+  "created_at": "2024-01-15T10:00:00.000Z",
+  "updated_at": "2024-01-15T10:35:00.000Z"
+}
+```
+
+### 9.4 Rechazar Pago (BAR)
+**Descripción**: El bar rechaza un pago por algún problema
+```bash
+curl -X PATCH http://localhost:3000/api/payments/2/reject \
+  -H "Authorization: Bearer $BAR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "notes": "Monto incorrecto - faltaron $5.00"
+  }'
+```
+
+**Output Esperado:**
+```json
+{
+  "id": 2,
+  "order_id": 2,
+  "method": "CASH",
+  "total_amount": 23.00,
+  "status": "REJECTED",
+  "created_by": 5,
+  "verified_by": 2,
+  "created_at": "2024-01-15T10:15:00.000Z",
+  "updated_at": "2024-01-15T10:40:00.000Z"
+}
+```
+
+### 9.5 Historial de Pago (BAR/WAITER)
+**Descripción**: Consultar el historial completo de un pago específico
+```bash
+curl -X GET http://localhost:3000/api/payments/1/history \
+  -H "Authorization: Bearer $BAR_TOKEN"
+```
+
+**Output Esperado:**
+```json
+[
+  {
+    "id": 1,
+    "action": "CREATED",
+    "user_id": 4,
+    "timestamp": "2024-01-15T10:00:00.000Z",
+    "notes": "Pago iniciado por mesero para mesa 1",
+    "user": {
+      "username": "waiter1"
+    }
+  },
+  {
+    "id": 4,
+    "action": "VERIFIED",
+    "user_id": 2,
+    "timestamp": "2024-01-15T10:35:00.000Z",
+    "notes": "Efectivo recibido correctamente - $32.00",
+    "user": {
+      "username": "baruser1"
+    }
+  }
+]
+```
+
+### 9.6 Generar Recibo (BAR/WAITER)
+**Descripción**: Generar recibo para un pago verificado
+```bash
+curl -X GET http://localhost:3000/api/payments/1/receipt \
+  -H "Authorization: Bearer $WAITER_TOKEN"
+```
+
+**Output Esperado:**
+```json
+{
+  "payment_id": 1,
+  "order_id": 1,
+  "table": "TABLE_001",
+  "location": "Main Floor",
+  "total_amount": 32.00,
+  "method": "CASH",
+  "status": "VERIFIED",
+  "items": [
+    {
+      "name": "Corona Beer",
+      "quantity": 2,
+      "unit_price": 5.00,
+      "subtotal": 10.00
+    },
+    {
+      "name": "Mojito",
+      "quantity": 2,
+      "unit_price": 12.00,
+      "subtotal": 24.00
+    }
+  ],
+  "verified_by": "baruser1",
+  "created_at": "2024-01-15T10:00:00.000Z",
+  "verified_at": "2024-01-15T10:35:00.000Z"
+}
+```
+
+### 9.7 Workflow Completo de Pago
+
+**Flujo completo desde pedido hasta pago verificado:**
+
+1. **Crear y procesar pedido hasta entrega** (usar secciones 7.1-7.6)
+2. **Solicitar pago** (9.1)
+3. **Verificar en pendientes** (9.2)
+4. **Verificar pago** (9.3)
+5. **Generar recibo** (9.6)
+6. **Consultar historial** (9.5)
+
+### 9.8 Estados de Pago
+- **PENDING**: Pago solicitado, esperando verificación del bar
+- **VERIFIED**: Pago verificado por el bar, proceso completado
+- **REJECTED**: Pago rechazado por el bar, requiere corrección
+
+### 9.9 Métodos de Pago MVP
+- **CASH**: Efectivo (único método en esta versión MVP)
+- **QR**: Para presentación (funcionalidad futura)
+
+### 9.10 Roles y Permisos de Pago
+- **WAITER**: Puede solicitar pagos para órdenes de sus mesas
+- **BAR**: Puede ver pagos pendientes, verificar/rechazar pagos, ver historial
+- **ADMIN**: Acceso completo a todas las funcionalidades de pago
+
+## 10. Notas Importantes
 
 ### Estados de Pedidos:
 - **PENDING**: Recién creado, esperando confirmación del bar
@@ -953,6 +1164,8 @@ curl -X GET http://localhost:3000/api/orders \
 - **PREPARING**: En preparación por el bar
 - **READY**: Listo para entrega por el waiter
 - **DELIVERED**: Entregado al cliente
+- **PAYMENT_PENDING**: Entregado, esperando verificación de pago
+- **COMPLETED**: Pago verificado, proceso completado
 
 ### Estados de Mesas:
 - **AVAILABLE**: Disponible para nuevos clientes
@@ -970,6 +1183,9 @@ curl -X GET http://localhost:3000/api/orders \
 - Stock se reduce automáticamente al crear pedidos
 - Mesas cambian a "occupied" cuando tienen pedidos activos
 - Solo productos con stock disponible pueden ordenarse
+- Al solicitar pago, la orden cambia automáticamente a "PAYMENT_PENDING"
+- Al verificar pago, la orden cambia a "COMPLETED" y la mesa se libera
+- Se crean logs automáticos para todas las acciones de pago
 
 ## 10. Comandos Útiles para Testing
 
@@ -1003,4 +1219,4 @@ curl -X GET http://localhost:3000/api/inventory \
 curl -I http://localhost:3000/api/auth/login
 ```
 
-Esta guía te permitirá validar completamente la funcionalidad del sistema BarFlow Fase 2, incluyendo toda la gestión de mesas, pedidos con workflow completo, y verificar que todos los controles de acceso y validaciones están funcionando correctamente.
+Esta guía te permitirá validar completamente la funcionalidad del sistema BarFlow Fase 3 MVP, incluyendo toda la gestión de mesas, pedidos con workflow completo, y el nuevo sistema de pagos con verificación manual. Verifica que todos los controles de acceso, validaciones, y el flujo de pago desde solicitud hasta verificación están funcionando correctamente.
