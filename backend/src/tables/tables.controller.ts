@@ -6,7 +6,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../users/user.entity';
 
-@Controller('api/tables')
+@Controller('tables')
 @UseGuards(JwtAuthGuard)
 export class TablesController {
   constructor(private readonly tablesService: TablesService) {}
