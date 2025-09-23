@@ -19,7 +19,7 @@ import {
 
 // Create axios instance
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -111,162 +111,189 @@ export const inventoryApi = {
 // Tables API
 export const tablesApi = {
   getAll: async (): Promise<Table[]> => {
-    const response: AxiosResponse<Table[]> = await api.get('/api/tables');
+    const response: AxiosResponse<Table[]> = await api.get('/tables');
     return response.data;
   },
 
   getMyTables: async (): Promise<Table[]> => {
-    const response: AxiosResponse<Table[]> = await api.get('/api/tables/my-tables');
+    const response: AxiosResponse<Table[]> = await api.get('/tables/my-tables');
     return response.data;
   },
 
   getByQR: async (qrCode: string): Promise<Table> => {
-    const response: AxiosResponse<Table> = await api.get(`/api/tables/qr/${qrCode}`);
+    const response: AxiosResponse<Table> = await api.get(`/tables/qr/${qrCode}`);
     return response.data;
   },
 
   getById: async (id: number): Promise<Table> => {
-    const response: AxiosResponse<Table> = await api.get(`/api/tables/${id}`);
+    const response: AxiosResponse<Table> = await api.get(`/tables/${id}`);
     return response.data;
   },
 
   create: async (table: Partial<Table>): Promise<Table> => {
-    const response: AxiosResponse<Table> = await api.post('/api/tables', table);
+    const response: AxiosResponse<Table> = await api.post('/tables', table);
     return response.data;
   },
 
   update: async (id: number, table: Partial<Table>): Promise<Table> => {
-    const response: AxiosResponse<Table> = await api.patch(`/api/tables/${id}`, table);
+    const response: AxiosResponse<Table> = await api.patch(`/tables/${id}`, table);
     return response.data;
   },
 
   updateStatus: async (id: number, status: UpdateTableStatus): Promise<Table> => {
-    const response: AxiosResponse<Table> = await api.patch(`/api/tables/${id}/status`, status);
+    const response: AxiosResponse<Table> = await api.patch(`/tables/${id}/status`, status);
     return response.data;
   },
 
   delete: async (id: number): Promise<void> => {
-    await api.delete(`/api/tables/${id}`);
+    await api.delete(`/tables/${id}`);
   },
 };
 
 // Orders API
 export const ordersApi = {
   getAll: async (): Promise<Order[]> => {
-    const response: AxiosResponse<Order[]> = await api.get('/api/orders');
+    const response: AxiosResponse<Order[]> = await api.get('/orders');
     return response.data;
   },
 
   getMyOrders: async (): Promise<Order[]> => {
-    const response: AxiosResponse<Order[]> = await api.get('/api/orders/my-orders');
+    const response: AxiosResponse<Order[]> = await api.get('/orders/my-orders');
     return response.data;
   },
 
   getPending: async (): Promise<Order[]> => {
-    const response: AxiosResponse<Order[]> = await api.get('/api/orders/pending');
+    const response: AxiosResponse<Order[]> = await api.get('/orders/pending');
     return response.data;
   },
 
   getReady: async (): Promise<Order[]> => {
-    const response: AxiosResponse<Order[]> = await api.get('/api/orders/ready');
+    const response: AxiosResponse<Order[]> = await api.get('/orders/ready');
     return response.data;
   },
 
   getByTable: async (tableId: number): Promise<Order[]> => {
-    const response: AxiosResponse<Order[]> = await api.get(`/api/orders/table/${tableId}`);
+    const response: AxiosResponse<Order[]> = await api.get(`/orders/table/${tableId}`);
     return response.data;
   },
 
   getById: async (id: number): Promise<Order> => {
-    const response: AxiosResponse<Order> = await api.get(`/api/orders/${id}`);
+    const response: AxiosResponse<Order> = await api.get(`/orders/${id}`);
     return response.data;
   },
 
   create: async (order: CreateOrder): Promise<Order> => {
-    const response: AxiosResponse<Order> = await api.post('/api/orders', order);
+    const response: AxiosResponse<Order> = await api.post('/orders', order);
     return response.data;
   },
 
   createByQR: async (qrCode: string, order: Omit<CreateOrder, 'table_id'>): Promise<Order> => {
-    const response: AxiosResponse<Order> = await api.post(`/api/orders/qr/${qrCode}`, order);
+    const response: AxiosResponse<Order> = await api.post(`/orders/qr/${qrCode}`, order);
     return response.data;
   },
 
   update: async (id: number, order: Partial<Order>): Promise<Order> => {
-    const response: AxiosResponse<Order> = await api.patch(`/api/orders/${id}`, order);
+    const response: AxiosResponse<Order> = await api.patch(`/orders/${id}`, order);
     return response.data;
   },
 
   updateStatus: async (id: number, status: UpdateOrderStatus): Promise<Order> => {
-    const response: AxiosResponse<Order> = await api.patch(`/api/orders/${id}/status`, status);
+    const response: AxiosResponse<Order> = await api.patch(`/orders/${id}/status`, status);
     return response.data;
   },
 
   confirm: async (id: number): Promise<Order> => {
-    const response: AxiosResponse<Order> = await api.patch(`/api/orders/${id}/confirm`);
+    const response: AxiosResponse<Order> = await api.patch(`/orders/${id}/confirm`);
     return response.data;
   },
 
   markReady: async (id: number): Promise<Order> => {
-    const response: AxiosResponse<Order> = await api.patch(`/api/orders/${id}/ready`);
+    const response: AxiosResponse<Order> = await api.patch(`/orders/${id}/ready`);
     return response.data;
   },
 
   deliver: async (id: number): Promise<Order> => {
-    const response: AxiosResponse<Order> = await api.patch(`/api/orders/${id}/deliver`);
+    const response: AxiosResponse<Order> = await api.patch(`/orders/${id}/deliver`);
     return response.data;
   },
 
   requestPayment: async (id: number): Promise<Order> => {
-    const response: AxiosResponse<Order> = await api.patch(`/api/orders/${id}/request-payment`);
+    const response: AxiosResponse<Order> = await api.patch(`/orders/${id}/request-payment`);
     return response.data;
   },
 
   delete: async (id: number): Promise<void> => {
-    await api.delete(`/api/orders/${id}`);
+    await api.delete(`/orders/${id}`);
   },
 };
 
 // Payments API
 export const paymentsApi = {
   getAll: async (): Promise<Payment[]> => {
-    const response: AxiosResponse<Payment[]> = await api.get('/api/payments');
+    const response: AxiosResponse<Payment[]> = await api.get('/payments');
     return response.data;
   },
 
   initiate: async (orderId: number, method: 'cash' | 'qr'): Promise<Payment> => {
-    const response: AxiosResponse<Payment> = await api.post(`/api/payments/initiate/${orderId}`, { method });
+    const response: AxiosResponse<Payment> = await api.post(`/payments/initiate/${orderId}`, { method });
     return response.data;
   },
 
   getPending: async (): Promise<Payment[]> => {
-    const response: AxiosResponse<Payment[]> = await api.get('/api/payments/pending');
+    const response: AxiosResponse<Payment[]> = await api.get('/payments/pending');
     return response.data;
   },
 
   getByOrder: async (orderId: number): Promise<Payment> => {
-    const response: AxiosResponse<Payment> = await api.get(`/api/payments/order/${orderId}`);
+    const response: AxiosResponse<Payment> = await api.get(`/payments/order/${orderId}`);
     return response.data;
   },
 
   verify: async (id: number, data: VerifyPayment): Promise<Payment> => {
-    const response: AxiosResponse<Payment> = await api.patch(`/api/payments/${id}/verify`, data);
+    const response: AxiosResponse<Payment> = await api.patch(`/payments/${id}/verify`, data);
     return response.data;
   },
 
   reject: async (id: number, data: RejectPayment): Promise<Payment> => {
-    const response: AxiosResponse<Payment> = await api.patch(`/api/payments/${id}/reject`, data);
+    const response: AxiosResponse<Payment> = await api.patch(`/payments/${id}/reject`, data);
     return response.data;
   },
 
   getReceipt: async (id: number): Promise<PaymentReceipt> => {
-    const response: AxiosResponse<PaymentReceipt> = await api.get(`/api/payments/${id}/receipt`);
+    const response: AxiosResponse<PaymentReceipt> = await api.get(`/payments/${id}/receipt`);
     return response.data;
   },
 
   getHistory: async (id: number): Promise<PaymentLog[]> => {
-    const response: AxiosResponse<PaymentLog[]> = await api.get(`/api/payments/${id}/history`);
+    const response: AxiosResponse<PaymentLog[]> = await api.get(`/payments/${id}/history`);
     return response.data;
+  },
+};
+
+// Users API
+export const usersApi = {
+  getAll: async (): Promise<User[]> => {
+    const response: AxiosResponse<User[]> = await api.get('/users');
+    return response.data;
+  },
+
+  getById: async (id: number): Promise<User> => {
+    const response: AxiosResponse<User> = await api.get(`/users/${id}`);
+    return response.data;
+  },
+
+  create: async (userData: { username: string; password: string; role: string }): Promise<User> => {
+    const response: AxiosResponse<User> = await api.post('/users', userData);
+    return response.data;
+  },
+
+  update: async (id: number, userData: Partial<{ username: string; password: string; role: string }>): Promise<User> => {
+    const response: AxiosResponse<User> = await api.put(`/users/${id}`, userData);
+    return response.data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/users/${id}`);
   },
 };
 
