@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Inventory } from './inventory.entity';
@@ -56,7 +56,17 @@ export class InventoryService {
 
   async remove(id: number): Promise<void> {
     const item = await this.findOne(id, UserRole.ADMIN);
-    await this.inventoryRepository.remove(item);
+    
+    try {
+      await this.inventoryRepository.remove(item);
+    } catch (error) {
+      if (error.code === '23503') { // Foreign key constraint violation
+        throw new ConflictException(
+          'No se puede eliminar este producto porque está siendo utilizado en pedidos existentes. Solo puedes eliminar productos que nunca han sido ordenados.'
+        );
+      }
+      throw error;
+    }
   }
 
   async findLowStock(): Promise<Inventory[]> {

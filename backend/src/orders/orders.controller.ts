@@ -4,6 +4,7 @@ import { CreateOrderDto, UpdateOrderDto, OrderStatus } from './dto/order.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { Public } from '../auth/public.decorator';
 import { UserRole } from '../users/user.entity';
 
 @Controller('orders')
@@ -16,7 +17,15 @@ export class OrdersController {
     return this.ordersService.create(createOrderDto, req.user);
   }
 
+  @Post('customer')
+  @Public()
+  createCustomerOrder(@Body() createOrderDto: CreateOrderDto) {
+    // Public endpoint for customer orders - no authentication required
+    return this.ordersService.createCustomerOrder(createOrderDto);
+  }
+
   @Post('qr/:qrCode')
+  @Public()
   createOrderByQR(@Param('qrCode') qrCode: string, @Body() createOrderDto: Omit<CreateOrderDto, 'table_id'>) {
     return this.ordersService.createOrderByQR(qrCode, createOrderDto);
   }

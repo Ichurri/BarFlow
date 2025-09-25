@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/Layout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -18,14 +18,39 @@ interface ProductModalProps {
 
 function ProductModal({ isOpen, onClose, product, mode }: ProductModalProps) {
   const [formData, setFormData] = useState<CreateInventoryItem>({
-    name: product?.name || '',
-    category: product?.category || 'drinks',
-    cost_price: product?.cost_price || 0,
-    sale_price: product?.sale_price || 0,
-    photo_url: product?.photo_url || '',
-    stock: product?.stock || 0,
-    min_stock: product?.min_stock || 5
+    name: '',
+    category: 'drinks',
+    cost_price: 0,
+    sale_price: 0,
+    photo_url: '',
+    stock: 0,
+    min_stock: 5
   });
+
+  // Update form data when product changes
+  useEffect(() => {
+    if (product && mode === 'edit') {
+      setFormData({
+        name: product.name || '',
+        category: product.category || 'drinks',
+        cost_price: typeof product.cost_price === 'string' ? parseFloat(product.cost_price) : (product.cost_price || 0),
+        sale_price: typeof product.sale_price === 'string' ? parseFloat(product.sale_price) : (product.sale_price || 0),
+        photo_url: product.photo_url || '',
+        stock: product.stock || 0,
+        min_stock: product.min_stock || 5
+      });
+    } else if (mode === 'create') {
+      setFormData({
+        name: '',
+        category: 'drinks',
+        cost_price: 0,
+        sale_price: 0,
+        photo_url: '',
+        stock: 0,
+        min_stock: 5
+      });
+    }
+  }, [product, mode]);
 
   const queryClient = useQueryClient();
 
@@ -38,8 +63,12 @@ function ProductModal({ isOpen, onClose, product, mode }: ProductModalProps) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: Partial<CreateInventoryItem>) => 
-      inventoryApi.update(product!.id, data),
+    mutationFn: (data: Partial<CreateInventoryItem>) => {
+      if (!product?.id) {
+        throw new Error('Product ID is required for update');
+      }
+      return inventoryApi.update(product.id, data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
       onClose();
@@ -50,7 +79,7 @@ function ProductModal({ isOpen, onClose, product, mode }: ProductModalProps) {
     e.preventDefault();
     if (mode === 'create') {
       createMutation.mutate(formData);
-    } else {
+    } else if (mode === 'edit' && product) {
       updateMutation.mutate(formData);
     }
   };

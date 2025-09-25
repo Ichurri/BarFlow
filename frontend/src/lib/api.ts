@@ -78,6 +78,12 @@ export const inventoryApi = {
     return response.data;
   },
 
+  getPublic: async (): Promise<InventoryItem[]> => {
+    // Public endpoint for customer ordering - no authentication required
+    const response: AxiosResponse<InventoryItem[]> = await api.get('/inventory/public');
+    return response.data;
+  },
+
   getLowStock: async (): Promise<InventoryItem[]> => {
     const response: AxiosResponse<InventoryItem[]> = await api.get('/inventory/low-stock');
     return response.data;
@@ -94,7 +100,9 @@ export const inventoryApi = {
   },
 
   update: async (id: number, item: Partial<CreateInventoryItem>): Promise<InventoryItem> => {
+    console.log('API update called with:', { id, item });
     const response: AxiosResponse<InventoryItem> = await api.patch(`/inventory/${id}`, item);
+    console.log('API update response:', response.data);
     return response.data;
   },
 
@@ -184,6 +192,12 @@ export const ordersApi = {
 
   create: async (order: CreateOrder): Promise<Order> => {
     const response: AxiosResponse<Order> = await api.post('/orders', order);
+    return response.data;
+  },
+
+  createCustomer: async (order: CreateOrder): Promise<Order> => {
+    // Public endpoint for customer orders - no authentication required
+    const response: AxiosResponse<Order> = await api.post('/orders/customer', order);
     return response.data;
   },
 

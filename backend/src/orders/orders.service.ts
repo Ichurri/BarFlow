@@ -73,12 +73,72 @@ export class OrdersService {
       await this.orderItemsRepository.save(orderItem);
     }
 
-    // Actualizar estado de la mesa si está disponible
+    // Marcar mesa como ocupada si estaba disponible
     if (table.status === TableStatus.AVAILABLE) {
-      await this.tablesService.updateStatus(table_id, TableStatus.OCCUPIED, user);
+      await this.tablesService.updateStatus(table_id, TableStatus.OCCUPIED, null);
     }
 
-    return await this.findOne(savedOrder.id, user);
+    return savedOrder;
+  }
+
+  async createCustomerOrder(createOrderDto: CreateOrderDto): Promise<Order> {
+    const { table_id, items, notes } = createOrderDto;
+
+    // Verificar que la mesa existe
+    const table = await this.tablesService.findOne(table_id);
+
+    // Calcular total y validar inventario
+    let totalAmount = 0;
+    const orderItems = [];
+
+    for (const item of items) {
+      const inventoryItem = await this.inventoryService.findOne(item.inventory_id);
+      
+      if (inventoryItem.stock < item.quantity) {
+        throw new BadRequestException(`Item ${inventoryItem.name} no tiene stock suficiente`);
+      }
+
+      const unitPrice = item.unit_price || inventoryItem.sale_price;
+      const subtotal = unitPrice * item.quantity;
+      totalAmount += subtotal;
+
+      orderItems.push({
+        inventory_id: item.inventory_id,
+        quantity: item.quantity,
+        unit_price: unitPrice,
+      });
+
+      // Reducir stock
+      await this.inventoryService.reduceStock(item.inventory_id, item.quantity);
+    }
+
+    // Crear la orden
+    const newOrder = this.ordersRepository.create({
+      table_id,
+      waiter_id: table.waiter_id, // Assign to table's waiter
+      bar_id: table.waiter?.bar_id || 1, // Default to bar 1 if no bar assigned
+      status: OrderStatus.PENDING,
+      total_amount: totalAmount,
+      notes,
+    });
+
+    const savedOrder = await this.ordersRepository.save(newOrder);
+
+    // Crear los items de la orden
+    for (const item of orderItems) {
+      const orderItem = this.orderItemsRepository.create({
+        order_id: savedOrder.id,
+        ...item,
+      });
+      await this.orderItemsRepository.save(orderItem);
+    }
+
+    // Marcar mesa como ocupada si estaba disponible
+    if (table.status === TableStatus.AVAILABLE) {
+      await this.tablesService.updateStatus(table_id, TableStatus.OCCUPIED, null);
+    }
+
+    return savedOrder;
   }
 
   async createOrderByQR(qrCode: string, createOrderDto: Omit<CreateOrderDto, 'table_id'>): Promise<Order> {

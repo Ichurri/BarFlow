@@ -15,6 +15,7 @@ import { CreateInventoryDto, UpdateInventoryDto } from './dto/inventory.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { Public } from '../auth/public.decorator';
 import { UserRole } from '../users/user.entity';
 
 @Controller('inventory')
@@ -38,6 +39,18 @@ export class InventoryController {
     }
     
     return this.inventoryService.findAll(userRole);
+  }
+
+  @Get('public')
+  @Public()
+  getPublicItems(@Query('category') category?: string) {
+    // Public endpoint for customer ordering - no authentication required
+    // Only shows items that are in stock and hides cost prices
+    if (category) {
+      return this.inventoryService.findByCategory(category);
+    }
+    
+    return this.inventoryService.getAvailableItems();
   }
 
   @Get('available')

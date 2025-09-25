@@ -36,10 +36,10 @@ export default function TableOrderPage() {
   const [isOrderPlaced, setIsOrderPlaced] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch menu items (inventory)
-  const { data: menuItems = [] } = useQuery({
-    queryKey: ['inventory'],
-    queryFn: inventoryApi.getAll,
+  // Fetch menu items (public inventory - no auth required)
+  const { data: menuItems = [], isLoading: isLoadingMenu } = useQuery({
+    queryKey: ['inventory-public'],
+    queryFn: inventoryApi.getPublic,
   });
 
   // Fetch table info
@@ -57,10 +57,10 @@ export default function TableOrderPage() {
     selectedCategory === 'all' || item.category === selectedCategory
   );
 
-  // Place order mutation
+  // Place order mutation (using customer endpoint - no auth required)
   const placeOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
-      return ordersApi.create(orderData);
+      return ordersApi.createCustomer(orderData);
     },
     onSuccess: () => {
       setIsOrderPlaced(true);
