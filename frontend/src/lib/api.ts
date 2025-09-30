@@ -17,7 +17,7 @@ import {
   RejectPayment,
 } from '@/types';
 
-// Create axios instance
+// Create axios instance for authenticated requests
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api',
   headers: {
@@ -25,7 +25,15 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add auth token
+// Create axios instance for public requests (no auth required)
+const publicApi = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor to add auth token for authenticated requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -34,15 +42,19 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor for error handling
+// Response interceptor for error handling on authenticated requests
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Clear token and redirect to login
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+    if (error.response?.status === 401 && typeof window !== 'undefined') {
+      // Only redirect to login if we're in the browser and it's an authenticated endpoint
+      const currentPath = window.location.pathname;
+      // Don't redirect if we're on public pages
+      if (!currentPath.startsWith('/table') && !currentPath.startsWith('/menu')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -80,7 +92,7 @@ export const inventoryApi = {
 
   getPublic: async (): Promise<InventoryItem[]> => {
     // Public endpoint for customer ordering - no authentication required
-    const response: AxiosResponse<InventoryItem[]> = await api.get('/inventory/public');
+    const response: AxiosResponse<InventoryItem[]> = await publicApi.get('/inventory/public');
     return response.data;
   },
 
@@ -129,12 +141,12 @@ export const tablesApi = {
   },
 
   getByQR: async (qrCode: string): Promise<Table> => {
-    const response: AxiosResponse<Table> = await api.get(`/tables/qr/${qrCode}`);
+    const response: AxiosResponse<Table> = await publicApi.get(`/tables/qr/${qrCode}`);
     return response.data;
   },
 
   getById: async (id: number): Promise<Table> => {
-    const response: AxiosResponse<Table> = await api.get(`/tables/${id}`);
+    const response: AxiosResponse<Table> = await publicApi.get(`/tables/${id}`);
     return response.data;
   },
 
@@ -197,12 +209,12 @@ export const ordersApi = {
 
   createCustomer: async (order: CreateOrder): Promise<Order> => {
     // Public endpoint for customer orders - no authentication required
-    const response: AxiosResponse<Order> = await api.post('/orders/customer', order);
+    const response: AxiosResponse<Order> = await publicApi.post('/orders/customer', order);
     return response.data;
   },
 
   createByQR: async (qrCode: string, order: Omit<CreateOrder, 'table_id'>): Promise<Order> => {
-    const response: AxiosResponse<Order> = await api.post(`/orders/qr/${qrCode}`, order);
+    const response: AxiosResponse<Order> = await publicApi.post(`/orders/qr/${qrCode}`, order);
     return response.data;
   },
 
