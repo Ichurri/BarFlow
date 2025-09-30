@@ -53,4 +53,19 @@ export class UsersController {
   async remove(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.remove(id);
   }
+
+  @Get(':id/waiter-info')
+  @Roles(UserRole.ADMIN)
+  async getWaiterInfo(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.getWaiterInfo(id);
+  }
+
+  @Post(':id/assign-tables')
+  @Roles(UserRole.ADMIN)
+  async assignTablesToWaiter(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { tableIds: number[] }
+  ) {
+    return this.usersService.assignTablesToWaiter(id, body.tableIds);
+  }
 }

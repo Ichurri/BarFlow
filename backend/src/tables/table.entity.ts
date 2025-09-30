@@ -18,7 +18,7 @@ export class Table {
   @Column({ unique: true })
   qr_code: string;
 
-  @Column()
+  @Column({ nullable: true })
   waiter_id: number;
 
   @Column({
@@ -41,7 +41,7 @@ export class Table {
   updated_at: Date;
 
   // Relations
-  @ManyToOne(() => Waiter, waiter => waiter.tables)
+  @ManyToOne(() => Waiter, waiter => waiter.tables, { nullable: true })
   @JoinColumn({ name: 'waiter_id' })
   waiter: Waiter;
 

@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
+import { Waiter } from '../waiters/waiter.entity';
+import { Table } from '../tables/table.entity';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
 import * as bcrypt from 'bcryptjs';
 
@@ -10,6 +12,10 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(Waiter)
+    private waitersRepository: Repository<Waiter>,
+    @InjectRepository(Table)
+    private tablesRepository: Repository<Table>,
   ) {}
 
   async findByUsername(username: string): Promise<User | undefined> {
@@ -90,5 +96,70 @@ export class UsersService {
 
   async validatePassword(plainTextPassword: string, hashedPassword: string): Promise<boolean> {
     return bcrypt.compare(plainTextPassword, hashedPassword);
+  }
+
+  async getWaiterInfo(userId: number): Promise<{ waiter: Waiter | null; tables: Table[] }> {
+    const user = await this.findOne(userId);
+    
+    if (user.role !== 'waiter') {
+      return { waiter: null, tables: [] };
+    }
+
+    // Find the waiter record for this user
+    const waiter = await this.waitersRepository.findOne({
+      where: { user_id: userId },
+      relations: ['bar']
+    });
+
+    if (!waiter) {
+      return { waiter: null, tables: [] };
+    }
+
+    // Find all tables assigned to this waiter
+    const tables = await this.tablesRepository.find({
+      where: { waiter_id: waiter.id },
+      order: { qr_code: 'ASC' }
+    });
+
+    return { waiter, tables };
+  }
+
+  async assignTablesToWaiter(userId: number, tableIds: number[]): Promise<void> {
+    const user = await this.findOne(userId);
+    
+    if (user.role !== 'waiter') {
+      throw new ConflictException('User is not a waiter');
+    }
+
+    // Find or create waiter record
+    let waiter = await this.waitersRepository.findOne({
+      where: { user_id: userId }
+    });
+
+    if (!waiter) {
+      // Create waiter record if it doesn't exist
+      // For now, assign to the first bar (you may want to make this configurable)
+      waiter = this.waitersRepository.create({
+        user_id: userId,
+        bar_id: 1 // Default to first bar
+      });
+      waiter = await this.waitersRepository.save(waiter);
+    }
+
+    // First, unassign all current tables from this waiter
+    await this.tablesRepository.update(
+      { waiter_id: waiter.id },
+      { waiter_id: null }
+    );
+
+    // Then assign the new tables
+    if (tableIds.length > 0) {
+      await this.tablesRepository
+        .createQueryBuilder()
+        .update(Table)
+        .set({ waiter_id: waiter.id })
+        .where('id IN (:...ids)', { ids: tableIds })
+        .execute();
+    }
   }
 }
