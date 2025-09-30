@@ -294,6 +294,17 @@ export const paymentsApi = {
     const response: AxiosResponse<PaymentLog[]> = await api.get(`/payments/${id}/history`);
     return response.data;
   },
+
+  // Customer payment endpoints (public - no auth required)
+  initiateCustomer: async (orderId: number, method: 'cash' | 'qr'): Promise<Payment> => {
+    const response: AxiosResponse<Payment> = await publicApi.post(`/payments/customer/initiate/${orderId}`, { method });
+    return response.data;
+  },
+
+  confirmCustomer: async (paymentId: number): Promise<Payment> => {
+    const response: AxiosResponse<Payment> = await publicApi.post(`/payments/customer/confirm/${paymentId}`);
+    return response.data;
+  },
 };
 
 // Users API

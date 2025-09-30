@@ -236,4 +236,82 @@ export class PaymentsService {
       order: { created_at: 'ASC' },
     });
   }
+
+  // Iniciar proceso de pago para cliente (público)
+  async initiateCustomerPayment(orderId: number, method: PaymentMethod) {
+    const order = await this.ordersRepository.findOne({
+      where: { id: orderId },
+      relations: ['orderItems', 'table', 'payment'],
+    });
+
+    if (!order) {
+      throw new NotFoundException('Orden no encontrada');
+    }
+
+    if (order.payment) {
+      throw new BadRequestException('Esta orden ya tiene un pago asociado');
+    }
+
+    // Crear el payment record
+    const payment = this.paymentsRepository.create({
+      order_id: orderId,
+      method: method,
+      status: PaymentStatus.PENDING,
+    });
+
+    const savedPayment = await this.paymentsRepository.save(payment);
+
+    // Crear log del pago iniciado
+    const log = this.paymentLogsRepository.create({
+      payment_id: savedPayment.id,
+      action: PaymentLogAction.CREATED,
+      user_id: null, // Cliente público, sin user_id
+      notes: `Pago iniciado por cliente con método: ${method}`,
+    });
+    await this.paymentLogsRepository.save(log);
+
+    return {
+      ...savedPayment,
+      order: {
+        id: order.id,
+        table: order.table,
+        total_amount: order.total_amount,
+      },
+    };
+  }
+
+  // Confirmar pago por parte del cliente (para QR)
+  async confirmCustomerPayment(paymentId: number) {
+    const payment = await this.paymentsRepository.findOne({
+      where: { id: paymentId },
+      relations: ['order', 'order.table'],
+    });
+
+    if (!payment) {
+      throw new NotFoundException('Pago no encontrado');
+    }
+
+    if (payment.status !== PaymentStatus.PENDING) {
+      throw new BadRequestException('Este pago ya ha sido procesado');
+    }
+
+    if (payment.method !== PaymentMethod.QR) {
+      throw new BadRequestException('Solo se pueden confirmar pagos por QR');
+    }
+
+    // Marcar como confirmado por el cliente, pero aún pendiente de verificación por staff
+    const log = this.paymentLogsRepository.create({
+      payment_id: paymentId,
+      action: PaymentLogAction.CREATED, // Usamos CREATED como log general
+      user_id: null, // Cliente público
+      notes: 'Pago confirmado por cliente - pendiente de verificación por staff',
+    });
+    await this.paymentLogsRepository.save(log);
+
+    return {
+      ...payment,
+      status: 'customer_confirmed', // Status especial para mostrar en frontend
+      message: 'Pago confirmado. El staff verificará tu pago en breve.',
+    };
+  }
 }

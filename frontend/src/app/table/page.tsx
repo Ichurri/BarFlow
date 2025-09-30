@@ -1,17 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { inventoryApi, tablesApi, ordersApi } from '@/lib/api';
+import { inventoryApi, tablesApi, ordersApi, paymentsApi } from '@/lib/api';
 import { formatPrice, cn } from '@/lib/utils';
+import { Order, InventoryItem, CreateOrder } from '@/types';
+import Image from 'next/image';
 import { 
   PlusIcon,
   MinusIcon,
   ShoppingCartIcon,
   CheckIcon,
   ClockIcon,
-  XMarkIcon
+  XMarkIcon,
+  BanknotesIcon,
+  QrCodeIcon
 } from '@heroicons/react/24/outline';
 
 interface CartItem {
@@ -22,22 +26,22 @@ interface CartItem {
   category: string;
 }
 
-interface TableInfo {
-  id: number;
-  name: string;
-  status: 'available' | 'occupied' | 'reserved';
-}
-
 export default function TableOrderPage() {
   const searchParams = useSearchParams();
   const tableId = searchParams.get('table');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isOrderPlaced, setIsOrderPlaced] = useState(false);
+  const [showPaymentOptions, setShowPaymentOptions] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'cash' | 'qr' | null>(null);
+  const [showQRPayment, setShowQRPayment] = useState(false);
+  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+  const [currentPayment, setCurrentPayment] = useState<{ id: number } | null>(null);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch menu items (public inventory - no auth required)
-  const { data: menuItems = [], isLoading: isLoadingMenu } = useQuery({
+  const { data: menuItems = [] } = useQuery({
     queryKey: ['inventory-public'],
     queryFn: inventoryApi.getPublic,
   });
@@ -49,6 +53,9 @@ export default function TableOrderPage() {
     enabled: !!tableId,
   });
 
+  // Remove unused variables to fix linting
+  console.log('Table info:', table);
+
   // Get unique categories
   const categories = ['all', ...new Set(menuItems.map(item => item.category))];
 
@@ -59,7 +66,7 @@ export default function TableOrderPage() {
 
   // Place order mutation (using customer endpoint - no auth required)
   const placeOrderMutation = useMutation({
-    mutationFn: async (orderData: any) => {
+    mutationFn: async (orderData: CreateOrder) => {
       return ordersApi.createCustomer(orderData);
     },
     onSuccess: () => {
@@ -69,7 +76,7 @@ export default function TableOrderPage() {
     },
   });
 
-  const addToCart = (item: any) => {
+  const addToCart = (item: InventoryItem) => {
     setCart(prev => {
       const existingItem = prev.find(cartItem => cartItem.id === item.id);
       if (existingItem) {
@@ -119,9 +126,63 @@ export default function TableOrderPage() {
 
   const handlePlaceOrder = () => {
     if (!tableId || cart.length === 0) return;
+    setShowPaymentOptions(true);
+  };
 
+  // Crear orden después de seleccionar método de pago
+  const createOrderMutation = useMutation({
+    mutationFn: async (orderData: CreateOrder) => {
+      return ordersApi.createCustomer(orderData);
+    },
+    onSuccess: (order) => {
+      setCurrentOrder(order);
+      // Iniciar el proceso de pago
+      if (selectedPaymentMethod) {
+        initiatePaymentMutation.mutate({
+          orderId: order.id,
+          method: selectedPaymentMethod
+        });
+      }
+    },
+  });
+
+  // Iniciar pago
+  const initiatePaymentMutation = useMutation({
+    mutationFn: async ({ orderId, method }: { orderId: number, method: 'cash' | 'qr' }) => {
+      return paymentsApi.initiateCustomer(orderId, method);
+    },
+    onSuccess: (payment) => {
+      setCurrentPayment(payment);
+      if (selectedPaymentMethod === 'qr') {
+        setShowQRPayment(true);
+      } else {
+        // Para efectivo, mostrar mensaje de espera
+        setIsOrderPlaced(true);
+        setCart([]);
+        setShowPaymentOptions(false);
+      }
+    },
+  });
+
+  // Confirmar pago por QR
+  const confirmPaymentMutation = useMutation({
+    mutationFn: async (paymentId: number) => {
+      return paymentsApi.confirmCustomer(paymentId);
+    },
+    onSuccess: () => {
+      setPaymentConfirmed(true);
+      setShowQRPayment(false);
+      setIsOrderPlaced(true);
+      setCart([]);
+      setShowPaymentOptions(false);
+    },
+  });
+
+  const handlePaymentMethodSelect = (method: 'cash' | 'qr') => {
+    setSelectedPaymentMethod(method);
+    
     const orderData = {
-      table_id: parseInt(tableId),
+      table_id: parseInt(tableId!),
       items: cart.map(item => ({
         inventory_id: item.id,
         quantity: item.quantity,
@@ -131,7 +192,7 @@ export default function TableOrderPage() {
       status: 'pending'
     };
 
-    placeOrderMutation.mutate(orderData);
+    createOrderMutation.mutate(orderData);
   };
 
   if (!tableId) {
@@ -145,19 +206,156 @@ export default function TableOrderPage() {
     );
   }
 
+  // Pantalla de selección de método de pago
+  if (showPaymentOptions) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+          <h2 className="text-xl font-bold text-gray-900 mb-6 text-center">Select Payment Method</h2>
+          <p className="text-gray-600 mb-6 text-center">
+            Total: <span className="font-bold text-lg">{formatPrice(getTotalPrice())}</span>
+          </p>
+          
+          <div className="space-y-4">
+            <button
+              onClick={() => handlePaymentMethodSelect('qr')}
+              disabled={createOrderMutation.isPending || initiatePaymentMutation.isPending}
+              className="w-full flex items-center justify-center space-x-3 p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors disabled:opacity-50"
+            >
+              <QrCodeIcon className="h-6 w-6 text-purple-600" />
+              <div className="text-left">
+                <div className="font-semibold text-gray-900">Pay with QR Code</div>
+                <div className="text-sm text-gray-600">Scan and pay instantly</div>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => handlePaymentMethodSelect('cash')}
+              disabled={createOrderMutation.isPending || initiatePaymentMutation.isPending}
+              className="w-full flex items-center justify-center space-x-3 p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors disabled:opacity-50"
+            >
+              <BanknotesIcon className="h-6 w-6 text-green-600" />
+              <div className="text-left">
+                <div className="font-semibold text-gray-900">Pay with Cash</div>
+                <div className="text-sm text-gray-600">Pay when waiter arrives</div>
+              </div>
+            </button>
+          </div>
+          
+          <button
+            onClick={() => setShowPaymentOptions(false)}
+            className="w-full mt-6 py-2 px-4 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Back to Cart
+          </button>
+          
+          {(createOrderMutation.isPending || initiatePaymentMutation.isPending) && (
+            <div className="mt-4 text-center text-gray-600">
+              <ClockIcon className="inline h-4 w-4 mr-2" />
+              Processing...
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Pantalla de pago con QR
+  if (showQRPayment) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Scan QR Code to Pay</h2>
+          <p className="text-gray-600 mb-6">
+            Total: <span className="font-bold text-lg">{formatPrice(getTotalPrice())}</span>
+          </p>
+          
+          <div className="mb-6 flex justify-center">
+            <div className="relative">
+              <Image
+                src="/QR.jpeg"
+                alt="QR Code for Payment"
+                width={200}
+                height={200}
+                className="rounded-lg shadow-md"
+              />
+            </div>
+          </div>
+          
+          <p className="text-sm text-gray-600 mb-6">
+            Scan this QR code with your banking app to complete the payment
+          </p>
+          
+          <button
+            onClick={() => {
+              if (currentPayment?.id) {
+                confirmPaymentMutation.mutate(currentPayment.id);
+              }
+            }}
+            disabled={confirmPaymentMutation.isPending}
+            className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 mb-4"
+          >
+            {confirmPaymentMutation.isPending ? (
+              <>
+                <ClockIcon className="inline h-4 w-4 mr-2" />
+                Confirming...
+              </>
+            ) : (
+              'I have completed the payment'
+            )}
+          </button>
+          
+          <button
+            onClick={() => {
+              setShowQRPayment(false);
+              setShowPaymentOptions(true);
+            }}
+            className="w-full py-2 px-4 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Back to Payment Options
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (isOrderPlaced) {
+    const isQRPayment = selectedPaymentMethod === 'qr';
+    const isCashPayment = selectedPaymentMethod === 'cash';
+    
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
           <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
             <CheckIcon className="h-6 w-6 text-green-600" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Order Placed Successfully!</h2>
-          <p className="text-gray-600 mb-6">
-            Your order has been sent to the kitchen. A waiter will serve your drinks shortly.
-          </p>
+          
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            {paymentConfirmed ? 'Payment Confirmed!' : 'Order Placed Successfully!'}
+          </h2>
+          
+          <div className="text-gray-600 mb-6">
+            {isQRPayment && paymentConfirmed && (
+              <p>Your payment has been received and is being verified by our staff. Your order is being prepared!</p>
+            )}
+            {isQRPayment && !paymentConfirmed && (
+              <p>Your order has been placed. Please complete the payment to proceed.</p>
+            )}
+            {isCashPayment && (
+              <p>Your order has been sent to the kitchen. Our waiter will collect payment when delivering your order.</p>
+            )}
+            {!selectedPaymentMethod && (
+              <p>Your order has been sent to the kitchen. A waiter will serve your drinks shortly.</p>
+            )}
+          </div>
+          
           <button
-            onClick={() => setIsOrderPlaced(false)}
+            onClick={() => {
+              setIsOrderPlaced(false);
+              setSelectedPaymentMethod(null);
+              setPaymentConfirmed(false);
+              setCurrentOrder(null);
+            }}
             className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700"
           >
             Order More Items
