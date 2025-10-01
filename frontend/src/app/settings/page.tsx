@@ -7,9 +7,6 @@ import {
   Cog6ToothIcon,
   ShieldCheckIcon,
   BellIcon,
-  ClockIcon,
-  CurrencyDollarIcon,
-  QrCodeIcon,
   ServerIcon
 } from '@heroicons/react/24/outline';
 
@@ -17,7 +14,7 @@ interface SettingsSection {
   id: string;
   title: string;
   description: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ className?: string }>;
   component: React.ComponentType;
 }
 

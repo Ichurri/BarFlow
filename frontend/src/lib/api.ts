@@ -334,8 +334,8 @@ export const usersApi = {
   },
 
   // Get waiter info with assigned tables
-  getWaiterInfo: async (userId: number): Promise<{ waiter: any; tables: Table[] }> => {
-    const response: AxiosResponse<{ waiter: any; tables: Table[] }> = await api.get(`/users/${userId}/waiter-info`);
+  getWaiterInfo: async (userId: number): Promise<{ waiter: User; tables: Table[] }> => {
+    const response: AxiosResponse<{ waiter: User; tables: Table[] }> = await api.get(`/users/${userId}/waiter-info`);
     return response.data;
   },
 

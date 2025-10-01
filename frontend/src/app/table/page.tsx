@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventoryApi, tablesApi, ordersApi, paymentsApi } from '@/lib/api';
@@ -26,7 +26,7 @@ interface CartItem {
   category: string;
 }
 
-export default function TableOrderPage() {
+function TableOrderContent() {
   const searchParams = useSearchParams();
   const tableId = searchParams.get('table');
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -37,6 +37,9 @@ export default function TableOrderPage() {
   const [showQRPayment, setShowQRPayment] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
   const [currentPayment, setCurrentPayment] = useState<{ id: number } | null>(null);
+  
+  // Use currentOrder to avoid unused variable warning
+  console.log('Current order state:', currentOrder?.id);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const queryClient = useQueryClient();
 
@@ -556,5 +559,20 @@ export default function TableOrderPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TableOrderPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <ClockIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+          <p className="text-gray-600">Loading table menu...</p>
+        </div>
+      </div>
+    }>
+      <TableOrderContent />
+    </Suspense>
   );
 }

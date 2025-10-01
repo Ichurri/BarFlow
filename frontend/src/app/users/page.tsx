@@ -139,8 +139,14 @@ function CreateUserModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
       setFormData({ username: '', password: '', role: 'waiter' });
       setError('');
     },
-    onError: (error: any) => {
-      setError(error.response?.data?.message || 'Failed to create user');
+    onError: (error: unknown) => {
+      const errorMessage = error instanceof Error && 'response' in error && 
+        typeof error.response === 'object' && error.response && 
+        'data' in error.response && typeof error.response.data === 'object' &&
+        error.response.data && 'message' in error.response.data 
+        ? String(error.response.data.message) 
+        : 'Failed to create user';
+      setError(errorMessage);
     }
   });
 
@@ -206,7 +212,7 @@ function CreateUserModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
               <label className="block text-sm font-medium text-gray-700">Role</label>
               <select
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'bar' | 'waiter' })}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
               >
                 <option value="waiter">Waiter</option>
@@ -266,7 +272,7 @@ function EditUserModal({ isOpen, onClose, user }: { isOpen: boolean; onClose: ()
   // Update selected tables when waiter info is loaded
   useEffect(() => {
     if (waiterInfo?.tables) {
-      setSelectedTables(waiterInfo.tables.map((table: any) => table.id));
+      setSelectedTables(waiterInfo.tables.map((table: { id: number }) => table.id));
     }
   }, [waiterInfo]);
 
@@ -291,8 +297,14 @@ function EditUserModal({ isOpen, onClose, user }: { isOpen: boolean; onClose: ()
       onClose();
       setError('');
     },
-    onError: (error: any) => {
-      setError(error.response?.data?.message || 'Failed to update user');
+    onError: (error: unknown) => {
+      const errorMessage = error instanceof Error && 'response' in error && 
+        typeof error.response === 'object' && error.response && 
+        'data' in error.response && typeof error.response.data === 'object' &&
+        error.response.data && 'message' in error.response.data 
+        ? String(error.response.data.message) 
+        : 'Failed to update user';
+      setError(errorMessage);
     }
   });
 
@@ -302,8 +314,14 @@ function EditUserModal({ isOpen, onClose, user }: { isOpen: boolean; onClose: ()
       queryClient.invalidateQueries({ queryKey: ['waiter-info', user.id] });
       queryClient.invalidateQueries({ queryKey: ['tables'] });
     },
-    onError: (error: any) => {
-      setError(error.response?.data?.message || 'Failed to assign tables');
+    onError: (error: unknown) => {
+      const errorMessage = error instanceof Error && 'response' in error && 
+        typeof error.response === 'object' && error.response && 
+        'data' in error.response && typeof error.response.data === 'object' &&
+        error.response.data && 'message' in error.response.data 
+        ? String(error.response.data.message) 
+        : 'Failed to assign tables';
+      setError(errorMessage);
     }
   });
 
@@ -390,7 +408,7 @@ function EditUserModal({ isOpen, onClose, user }: { isOpen: boolean; onClose: ()
               <label className="block text-sm font-medium text-gray-700">Role</label>
               <select
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'bar' | 'waiter' })}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
               >
                 <option value="waiter">Waiter</option>
@@ -412,7 +430,7 @@ function EditUserModal({ isOpen, onClose, user }: { isOpen: boolean; onClose: ()
                     </p>
                   ) : (
                     <div className="grid grid-cols-2 gap-2">
-                      {allTables.map((table: any) => (
+                      {allTables.map((table) => (
                         <label
                           key={table.id}
                           className="flex items-center p-2 rounded-md hover:bg-gray-50 cursor-pointer"

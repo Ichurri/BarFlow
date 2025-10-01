@@ -5,7 +5,7 @@ import Layout from '@/components/Layout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ordersApi } from '@/lib/api';
 import { formatCurrency, getStatusColor, cn } from '@/lib/utils';
-import { CheckIcon, ClockIcon, XMarkIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, ClockIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Order } from '@/types';
 
 const statusConfig = {

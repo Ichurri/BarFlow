@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/Layout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventoryApi } from '@/lib/api';
-import { formatCurrency, getStatusColor, cn } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
 import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { InventoryItem, CreateInventoryItem } from '@/types';
 
