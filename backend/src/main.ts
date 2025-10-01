@@ -11,6 +11,7 @@ async function bootstrap() {
     origin: process.env.NODE_ENV === 'production' 
       ? [
           'https://bar-flow.vercel.app',
+          'https://bar-flow-client.vercel.app',
           process.env.FRONTEND_URL,
           'http://localhost:3000',
           'http://localhost:3001'
