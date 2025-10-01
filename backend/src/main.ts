@@ -9,7 +9,10 @@ async function bootstrap() {
   // Enable CORS for frontend integration
   app.enableCors({
     origin: process.env.NODE_ENV === 'production' 
-      ? ['https://your-frontend-domain.com'] 
+      ? [
+          'https://bar-flow.vercel.app',
+          process.env.FRONTEND_URL
+        ].filter(Boolean)
       : ['http://localhost:3001', 'http://localhost:3000'],
     credentials: true,
   });
