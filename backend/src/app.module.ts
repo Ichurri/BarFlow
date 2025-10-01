@@ -31,6 +31,9 @@ import { PaymentsModule } from './payments/payments.module';
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: process.env.NODE_ENV !== 'production',
         logging: process.env.NODE_ENV === 'development',
+        ssl: configService.get('DB_SSL') === 'true' ? {
+          rejectUnauthorized: false // Required for Render PostgreSQL
+        } : false,
       }),
       inject: [ConfigService],
     }),
