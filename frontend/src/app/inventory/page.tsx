@@ -373,24 +373,24 @@ export default function InventoryPage() {
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      {(user?.role === 'admin' || user?.role === 'bar') && (
-                        <button
-                          onClick={() => handleEdit(item)}
-                          className="text-gray-400 hover:text-gray-500"
-                          title="Edit product"
-                        >
-                          <PencilIcon className="h-5 w-5" />
-                        </button>
-                      )}
                       {user?.role === 'admin' && (
-                        <button
-                          onClick={() => handleDelete(item)}
-                          disabled={deleteMutation.isPending}
-                          className="text-red-400 hover:text-red-500 disabled:opacity-50"
-                          title="Delete product"
-                        >
-                          <TrashIcon className="h-5 w-5" />
-                        </button>
+                        <>
+                          <button
+                            onClick={() => handleEdit(item)}
+                            className="text-gray-400 hover:text-gray-500"
+                            title="Edit product"
+                          >
+                            <PencilIcon className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item)}
+                            disabled={deleteMutation.isPending}
+                            className="text-red-400 hover:text-red-500 disabled:opacity-50"
+                            title="Delete product"
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
