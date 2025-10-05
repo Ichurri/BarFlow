@@ -57,6 +57,7 @@ export class TablesService {
     const table = await this.tablesRepository.createQueryBuilder('table')
       .leftJoinAndSelect('table.waiter', 'waiter')
       .leftJoinAndSelect('waiter.user', 'user')
+      .leftJoinAndSelect('waiter.bar', 'bar')
       .leftJoinAndSelect('table.orders', 'orders')
       .where('table.id = :id', { id })
       .getOne();
@@ -88,8 +89,8 @@ export class TablesService {
       throw new ForbiddenException('Estado de mesa inválido');
     }
 
-    // Solo el mesero asignado o admin puede cambiar estado
-    if (user.role === UserRole.WAITER && table.waiter.user_id !== user.id) {
+    // Solo el mesero asignado o admin puede cambiar estado (skip validation if user is null - system operation)
+    if (user && user.role === UserRole.WAITER && table.waiter.user_id !== user.id) {
       throw new ForbiddenException('Solo puedes cambiar el estado de tus mesas asignadas');
     }
 

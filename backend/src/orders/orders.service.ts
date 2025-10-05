@@ -47,8 +47,7 @@ export class OrdersService {
       orderItems.push({
         inventory_id: item.inventory_id,
         quantity: item.quantity,
-        unit_price: unitPrice,
-        subtotal: subtotal,
+        price: unitPrice,
       });
     }
 
@@ -56,7 +55,7 @@ export class OrdersService {
     const order = this.ordersRepository.create({
       table_id,
       waiter_id: table.waiter_id,
-      bar_id: table.waiter.bar_id,
+      bar_id: table.waiter?.bar?.id || 1,
       total_amount: totalAmount,
       notes,
       status: OrderStatus.PENDING,
@@ -67,8 +66,10 @@ export class OrdersService {
     // Crear los items de la orden
     for (const item of orderItems) {
       const orderItem = this.orderItemsRepository.create({
-        ...item,
         order_id: savedOrder.id,
+        inventory_id: item.inventory_id,
+        quantity: item.quantity,
+        price: item.price,
       });
       await this.orderItemsRepository.save(orderItem);
     }
@@ -105,7 +106,7 @@ export class OrdersService {
       orderItems.push({
         inventory_id: item.inventory_id,
         quantity: item.quantity,
-        unit_price: unitPrice,
+        price: unitPrice,
       });
 
       // Reducir stock
@@ -116,7 +117,7 @@ export class OrdersService {
     const newOrder = this.ordersRepository.create({
       table_id,
       waiter_id: table.waiter_id, // Assign to table's waiter
-      bar_id: table.waiter?.bar_id || 1, // Default to bar 1 if no bar assigned
+      bar_id: table.waiter?.bar?.id || 1, // Default to bar 1 if no bar assigned
       status: OrderStatus.PENDING,
       total_amount: totalAmount,
       notes,
@@ -128,7 +129,9 @@ export class OrdersService {
     for (const item of orderItems) {
       const orderItem = this.orderItemsRepository.create({
         order_id: savedOrder.id,
-        ...item,
+        inventory_id: item.inventory_id,
+        quantity: item.quantity,
+        price: item.price,
       });
       await this.orderItemsRepository.save(orderItem);
     }
