@@ -6,15 +6,8 @@
 
 #### **Desarrollo Local** (usa backend local)
 ```bash
-# Archivo: frontend/.env
+# Archivo: frontend/.env.development
 NEXT_PUBLIC_API_URL=http://localhost:4000/api
-NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
-```
-
-#### **Desarrollo contra Producción** (usa backend de producción)
-```bash
-# Archivo: frontend/.env.local
-NEXT_PUBLIC_API_URL=https://barflow.onrender.com/api
 ```
 
 #### **Producción** (Vercel)
@@ -38,10 +31,10 @@ DB_DATABASE=barflow_db
 DB_SSL=false
 ```
 
-#### **Desarrollo contra Producción** (usa BD de producción)
+#### **Producción** (Render)
 ```bash
-# Archivo: backend/.env.local
-NODE_ENV=development
+# Archivo: backend/.env.production
+NODE_ENV=production
 PORT=4000
 DB_HOST=dpg-d3ej9q3uibrs73c9tco0-a.oregon-postgres.render.com
 DB_PORT=5432
@@ -49,14 +42,6 @@ DB_USERNAME=barflow_user
 DB_PASSWORD=KvtRuti0sU4dVw4vfBwFIwTg5yunTlGC
 DB_DATABASE=barflow_db
 DB_SSL=true
-```
-
-#### **Producción** (Render)
-```bash
-# Archivo: backend/.env
-NODE_ENV=production
-DB_HOST=dpg-d3ej9q3uibrs73c9tco0-a.oregon-postgres.render.com
-# ... configuración de producción
 ```
 
 ---

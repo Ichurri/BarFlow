@@ -33,14 +33,9 @@ function start_backend() {
     echo "🚀 Iniciando Backend en modo desarrollo..."
     cd "$BACKEND_DIR"
     
-    # Usar configuración local si existe, sino usar .env por defecto
-    if [ -f .env.local ]; then
-        echo "📁 Usando configuración .env.local (BD de producción)"
-        cp .env.local .env
-    elif [ -f .env.development ]; then
-        echo "📁 Usando configuración .env.development (BD local)"
-        cp .env.development .env
-    fi
+    # Usar configuración de desarrollo
+    echo "📁 Usando configuración .env.development"
+    cp .env.development .env
     
     npm run start:dev
 }
@@ -48,6 +43,11 @@ function start_backend() {
 function start_frontend() {
     echo "🎨 Iniciando Frontend en modo desarrollo..."
     cd "$FRONTEND_DIR"
+    
+    # Usar configuración de desarrollo
+    echo "📁 Usando configuración .env.development"
+    cp .env.development .env
+    
     npm run dev
 }
 
@@ -55,9 +55,9 @@ function start_hybrid() {
     echo "🔄 Iniciando desarrollo híbrido (Frontend local + Backend producción)..."
     cd "$FRONTEND_DIR"
     
-    # Crear .env.local para apuntar a producción
-    echo "NEXT_PUBLIC_API_URL=https://barflow.onrender.com/api" > .env.local
-    echo "📁 Frontend configurado para usar backend de producción"
+    # Usar configuración de producción para apuntar a backend de producción
+    echo "📁 Usando configuración .env.production (backend de producción)"
+    cp .env.production .env
     
     npm run dev
 }
