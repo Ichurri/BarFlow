@@ -22,7 +22,7 @@ export class PaymentLog {
   })
   action: PaymentLogAction;
 
-  @Column()
+  @Column({ nullable: true })
   user_id: number;
 
   @Column({ type: 'text', nullable: true })
