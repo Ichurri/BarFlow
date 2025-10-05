@@ -15,7 +15,8 @@ import {
   ClockIcon,
   XMarkIcon,
   BanknotesIcon,
-  QrCodeIcon
+  QrCodeIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
 interface CartItem {
@@ -50,10 +51,11 @@ function TableOrderContent() {
   });
 
   // Fetch table info
-  const { data: table } = useQuery({
+  const { data: table, error: tableError, isLoading: tableLoading } = useQuery({
     queryKey: ['table', tableId],
     queryFn: () => tableId ? tablesApi.getById(parseInt(tableId)) : null,
     enabled: !!tableId,
+    retry: false, // Don't retry on 404
   });
 
   // Remove unused variables to fix linting
@@ -135,9 +137,11 @@ function TableOrderContent() {
   // Crear orden después de seleccionar método de pago
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: CreateOrder) => {
+      console.log('CreateOrder mutation called with:', orderData);
       return ordersApi.createCustomer(orderData);
     },
     onSuccess: (order) => {
+      console.log('Order created successfully:', order);
       setCurrentOrder(order);
       // Iniciar el proceso de pago
       if (selectedPaymentMethod) {
@@ -147,6 +151,10 @@ function TableOrderContent() {
         });
       }
     },
+    onError: (error) => {
+      console.error('Error creating order:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+    }
   });
 
   // Iniciar pago
@@ -167,13 +175,15 @@ function TableOrderContent() {
     },
   });
 
-  // Confirmar pago por QR
+  // Confirmar que el cliente hizo el pago (esto enviará la solicitud a la barra)
   const confirmPaymentMutation = useMutation({
     mutationFn: async (paymentId: number) => {
+      // Solo confirmar que el cliente dice haber pagado, no aprobar automáticamente
       return paymentsApi.confirmCustomer(paymentId);
     },
     onSuccess: () => {
-      setPaymentConfirmed(true);
+      // No setear paymentConfirmed automáticamente
+      // La barra debe aprobar manualmente en su sistema
       setShowQRPayment(false);
       setIsOrderPlaced(true);
       setCart([]);
@@ -189,12 +199,13 @@ function TableOrderContent() {
       items: cart.map(item => ({
         inventory_id: item.id,
         quantity: item.quantity,
-        price: item.price
+        unit_price: parseFloat(item.price.toString())
       })),
-      total_amount: getTotalPrice(),
-      status: 'pending'
+      status: 'pending',
+      notes: `Payment method: ${method}`
     };
 
+    console.log('Sending order data:', JSON.stringify(orderData, null, 2));
     createOrderMutation.mutate(orderData);
   };
 
@@ -276,7 +287,7 @@ function TableOrderContent() {
           <div className="mb-6 flex justify-center">
             <div className="relative">
               <Image
-                src="/QR.jpeg"
+                src="https://personal-website-s3-bucket.s3.us-east-2.amazonaws.com/profile.webp"
                 alt="QR Code for Payment"
                 width={200}
                 height={200}
@@ -334,15 +345,12 @@ function TableOrderContent() {
           </div>
           
           <h2 className="text-xl font-bold text-gray-900 mb-2">
-            {paymentConfirmed ? 'Payment Confirmed!' : 'Order Placed Successfully!'}
+            Order Submitted Successfully!
           </h2>
           
           <div className="text-gray-600 mb-6">
-            {isQRPayment && paymentConfirmed && (
-              <p>Your payment has been received and is being verified by our staff. Your order is being prepared!</p>
-            )}
-            {isQRPayment && !paymentConfirmed && (
-              <p>Your order has been placed. Please complete the payment to proceed.</p>
+            {isQRPayment && (
+              <p>Your payment confirmation has been sent to our staff. They will verify the payment and prepare your order. Please wait for confirmation from the bar.</p>
             )}
             {isCashPayment && (
               <p>Your order has been sent to the kitchen. Our waiter will collect payment when delivering your order.</p>
@@ -362,6 +370,43 @@ function TableOrderContent() {
             className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700"
           >
             Order More Items
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle table loading and errors
+  if (tableLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading table information...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (tableError || (tableId && !table)) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Table Not Found</h2>
+          <p className="text-gray-600 mb-6">
+            Table #{tableId} does not exist or is not available.
+          </p>
+          <p className="text-sm text-gray-500 mb-4">
+            Available tables: 111, 112, 113, 114, 115, 116, 117, 118, 119, 120
+          </p>
+          <button
+            onClick={() => window.location.href = '/table?table=113'}
+            className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700"
+          >
+            Go to Table 113 (Available)
           </button>
         </div>
       </div>

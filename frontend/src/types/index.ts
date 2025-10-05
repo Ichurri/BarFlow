@@ -86,10 +86,12 @@ export interface Order {
 
 export interface CreateOrder {
   table_id: number;
-  items: Array<{
+  items: {
     inventory_id: number;
     quantity: number;
-  }>;
+    unit_price?: number;
+  }[];
+  status?: string;
   notes?: string;
 }
 
