@@ -33,9 +33,8 @@ export class TablesService {
   async getTablesByWaiter(userId: number): Promise<Table[]> {
     return await this.tablesRepository.createQueryBuilder('table')
       .leftJoinAndSelect('table.waiter', 'waiter')
-      .leftJoinAndSelect('table.orders', 'orders')
+      .leftJoinAndSelect('table.orders', 'orders', 'orders.status IN (:...statuses)', { statuses: ['pending', 'preparing', 'ready'] })
       .where('waiter.user_id = :userId', { userId })
-      .andWhere('orders.status IN (:...statuses)', { statuses: ['pending', 'preparing', 'ready'] })
       .getMany();
   }
 

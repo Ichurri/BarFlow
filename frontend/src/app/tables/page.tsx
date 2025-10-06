@@ -173,8 +173,9 @@ export default function TablesPage() {
   const { user } = useAuth();
 
   const { data: tables, isLoading } = useQuery({
-    queryKey: ['tables'],
-    queryFn: tablesApi.getAll,
+    queryKey: ['tables', user?.role],
+    queryFn: user?.role === 'waiter' ? tablesApi.getMyTables : tablesApi.getAll,
+    enabled: !!user,
   });
 
   if (isLoading) {
@@ -187,12 +188,8 @@ export default function TablesPage() {
     );
   }
 
-  // Filter tables for waiters (only their assigned tables)
-  const filteredTables = tables?.filter(table => {
-    if (user?.role === 'admin') return true;
-    if (user?.role === 'waiter') return table.waiter_id === user.id;
-    return true;
-  }) || [];
+  // Tables are already filtered by the backend based on user role
+  const filteredTables = tables || [];
 
   // Group tables by status
   const tablesByStatus = filteredTables.reduce((acc, table) => {
