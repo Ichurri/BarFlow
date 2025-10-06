@@ -287,7 +287,7 @@ function TableOrderContent() {
           <div className="mb-6 flex justify-center">
             <div className="relative">
               <Image
-                src="https://personal-website-s3-bucket.s3.us-east-2.amazonaws.com/profile.webp"
+                src="https://barflowstorageacc.blob.core.windows.net/barflowcontainer/qr_fs.jpeg"
                 alt="QR Code for Payment"
                 width={200}
                 height={200}
