@@ -163,7 +163,7 @@ export class PaymentsService {
 
     return this.paymentsRepository.find({
       where: { status: PaymentStatus.PENDING },
-      relations: ['order', 'order.table', 'order.waiter', 'order.waiter.user'],
+      relations: ['order', 'order.table', 'order.waiter', 'order.waiter.user', 'order.orderItems', 'order.orderItems.inventory', 'verifiedBy'],
       order: { created_at: 'ASC' },
     });
   }
