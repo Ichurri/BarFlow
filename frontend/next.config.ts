@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'barflowstorageacc.blob.core.windows.net',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
