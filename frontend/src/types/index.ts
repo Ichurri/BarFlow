@@ -82,6 +82,7 @@ export interface Order {
     user: User;
   };
   items?: OrderItem[];
+  orderItems?: OrderItem[]; // Adding backend compatibility
 }
 
 export interface CreateOrder {
@@ -101,7 +102,6 @@ export interface Payment {
   order_id: number;
   method: 'cash' | 'qr';
   status: 'pending' | 'verified' | 'rejected';
-  total_amount: string;
   transaction_id?: string;
   verified_by?: number;
   created_at: string;
