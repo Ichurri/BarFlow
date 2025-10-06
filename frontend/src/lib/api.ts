@@ -270,6 +270,11 @@ export const paymentsApi = {
     return response.data;
   },
 
+  getMyPayments: async (): Promise<Payment[]> => {
+    const response: AxiosResponse<Payment[]> = await api.get('/payments/my-payments');
+    return response.data;
+  },
+
   getByOrder: async (orderId: number): Promise<Payment> => {
     const response: AxiosResponse<Payment> = await api.get(`/payments/order/${orderId}`);
     return response.data;

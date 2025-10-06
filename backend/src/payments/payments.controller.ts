@@ -36,7 +36,7 @@ export class PaymentsController {
 
   @Patch(':id/verify')
   @UseGuards(RolesGuard)
-  @Roles(UserRole.BAR, UserRole.ADMIN)
+  @Roles(UserRole.BAR, UserRole.ADMIN, UserRole.WAITER)
   async verifyPayment(@Param('id') id: string, @Request() req) {
     return this.paymentsService.verifyPayment(+id, req.user.id, req.user.role);
   }
@@ -57,6 +57,13 @@ export class PaymentsController {
   @Roles(UserRole.BAR, UserRole.ADMIN)
   async getPendingPayments(@Request() req) {
     return this.paymentsService.getPendingPayments(req.user.role);
+  }
+
+  @Get('my-payments')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.WAITER)
+  async getMyPayments(@Request() req) {
+    return this.paymentsService.getPaymentsByWaiter(req.user.id);
   }
 
   @Get('order/:orderId')

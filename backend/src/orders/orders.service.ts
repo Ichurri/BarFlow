@@ -183,11 +183,12 @@ export class OrdersService {
   async getOrdersByWaiter(userId: number, status?: OrderStatus): Promise<Order[]> {
     const queryBuilder = this.ordersRepository.createQueryBuilder('order')
       .leftJoinAndSelect('order.table', 'table')
+      .leftJoinAndSelect('table.waiter', 'tableWaiter')
       .leftJoinAndSelect('order.waiter', 'waiter')
       .leftJoinAndSelect('waiter.user', 'waiterUser')
       .leftJoinAndSelect('order.orderItems', 'orderItems')
       .leftJoinAndSelect('orderItems.inventory', 'inventory')
-      .where('waiterUser.id = :userId', { userId })
+      .where('tableWaiter.user_id = :userId', { userId })
       .orderBy('order.created_at', 'DESC');
 
     if (status) {

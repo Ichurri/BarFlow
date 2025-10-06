@@ -160,12 +160,15 @@ function TableOrderContent() {
   // Iniciar pago
   const initiatePaymentMutation = useMutation({
     mutationFn: async ({ orderId, method }: { orderId: number, method: 'cash' | 'qr' }) => {
+      console.log('Initiating payment for order:', orderId, 'method:', method);
       return paymentsApi.initiateCustomer(orderId, method);
     },
     onSuccess: (payment) => {
+      console.log('Payment initiated successfully:', payment);
       setCurrentPayment(payment);
       if (selectedPaymentMethod === 'qr') {
         setShowQRPayment(true);
+        setShowPaymentOptions(false); // Hide payment options when showing QR
       } else {
         // Para efectivo, mostrar mensaje de espera
         setIsOrderPlaced(true);
@@ -173,22 +176,32 @@ function TableOrderContent() {
         setShowPaymentOptions(false);
       }
     },
+    onError: (error) => {
+      console.error('Error initiating payment:', error);
+    }
   });
 
   // Confirmar que el cliente hizo el pago (esto enviará la solicitud a la barra)
   const confirmPaymentMutation = useMutation({
     mutationFn: async (paymentId: number) => {
+      console.log('Confirming payment:', paymentId);
       // Solo confirmar que el cliente dice haber pagado, no aprobar automáticamente
       return paymentsApi.confirmCustomer(paymentId);
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
+      console.log('Payment confirmed successfully:', response);
       // No setear paymentConfirmed automáticamente
       // La barra debe aprobar manualmente en su sistema
       setShowQRPayment(false);
       setIsOrderPlaced(true);
       setCart([]);
       setShowPaymentOptions(false);
+      setSelectedPaymentMethod(null);
+      setCurrentPayment(null);
     },
+    onError: (error) => {
+      console.error('Error confirming payment:', error);
+    }
   });
 
   const handlePaymentMethodSelect = (method: 'cash' | 'qr') => {

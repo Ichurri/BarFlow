@@ -104,17 +104,20 @@ function OrderCard({ order }: { order: Order }) {
         <div className="mt-4">
           <h4 className="text-sm font-medium text-gray-900 mb-2">Items:</h4>
           <ul className="space-y-1">
-            {order.items?.map((item, index) => (
-              <li key={index} className="flex justify-between text-sm">
+            {(order.orderItems || order.items || []).map((item, index) => (
+              <li key={item.id || index} className="flex justify-between text-sm">
                 <span className="text-gray-600">
                   {item.quantity}x {item.inventory?.name || `Item ${item.inventory_id}`}
                 </span>
                 <span className="text-gray-900">
-                  {formatCurrency((item.unit_price || item.price) * item.quantity)}
+                  {formatCurrency(Number(item.price) * item.quantity)}
                 </span>
               </li>
             ))}
           </ul>
+          {(order.orderItems || order.items || []).length === 0 && (
+            <p className="text-sm text-gray-500 italic">No items found</p>
+          )}
           <div className="mt-2 pt-2 border-t border-gray-200">
             <div className="flex justify-between text-sm font-medium">
               <span>Total:</span>
@@ -163,8 +166,9 @@ export default function OrdersPage() {
   const { user } = useAuth();
 
   const { data: orders, isLoading } = useQuery({
-    queryKey: ['orders'],
-    queryFn: ordersApi.getAll,
+    queryKey: ['orders', user?.role],
+    queryFn: user?.role === 'waiter' ? ordersApi.getMyOrders : ordersApi.getAll,
+    enabled: !!user,
   });
 
   const { data: pendingOrders } = useQuery({
@@ -183,11 +187,11 @@ export default function OrdersPage() {
     );
   }
 
-  // Filter orders based on user role
+  // Filter orders based on user role (backend already handles waiter filtering)
   const filteredOrders = orders?.filter(order => {
     if (user?.role === 'admin') return true;
     if (user?.role === 'bar') return ['pending', 'preparing', 'ready'].includes(order.status);
-    if (user?.role === 'waiter') return order.waiter_id === user.id || order.status === 'ready';
+    if (user?.role === 'waiter') return true; // Backend already filters waiter orders
     return false;
   }) || [];
 

@@ -68,15 +68,11 @@ export class PaymentsService {
     };
   }
 
-  // Verificar pago en efectivo (solo BAR puede hacerlo)
+  // Verificar pago en efectivo (BAR, ADMIN y WAITER pueden hacerlo)
   async verifyPayment(paymentId: number, userId: number, userRole: UserRole) {
-    if (userRole !== UserRole.BAR && userRole !== UserRole.ADMIN) {
-      throw new ForbiddenException('Solo el personal del bar puede verificar pagos');
-    }
-
     const payment = await this.paymentsRepository.findOne({
       where: { id: paymentId },
-      relations: ['order', 'order.table'],
+      relations: ['order', 'order.table', 'order.table.waiter'],
     });
 
     if (!payment) {
@@ -85,6 +81,24 @@ export class PaymentsService {
 
     if (payment.status !== PaymentStatus.PENDING) {
       throw new BadRequestException('Este pago ya ha sido procesado');
+    }
+
+    // Validaciones específicas para waiters
+    if (userRole === UserRole.WAITER) {
+      // Los waiters solo pueden verificar pagos en efectivo
+      if (payment.method !== PaymentMethod.CASH) {
+        throw new ForbiddenException('Los meseros solo pueden verificar pagos en efectivo');
+      }
+
+      // Los waiters solo pueden verificar pagos de sus mesas asignadas
+      if (payment.order.table.waiter?.user_id !== userId) {
+        throw new ForbiddenException('Solo puedes verificar pagos de tus mesas asignadas');
+      }
+    }
+
+    // Validaciones para BAR/ADMIN (pueden verificar cualquier pago)
+    if (userRole !== UserRole.BAR && userRole !== UserRole.ADMIN && userRole !== UserRole.WAITER) {
+      throw new ForbiddenException('No tienes permisos para verificar pagos');
     }
 
     // Verificar el pago
@@ -166,6 +180,23 @@ export class PaymentsService {
       relations: ['order', 'order.table', 'order.waiter', 'order.waiter.user', 'order.orderItems', 'order.orderItems.inventory', 'verifiedBy'],
       order: { created_at: 'ASC' },
     });
+  }
+
+  // Obtener pagos de las mesas asignadas al waiter
+  async getPaymentsByWaiter(userId: number) {
+    return this.paymentsRepository.createQueryBuilder('payment')
+      .leftJoinAndSelect('payment.order', 'order')
+      .leftJoinAndSelect('order.table', 'table')
+      .leftJoinAndSelect('table.waiter', 'tableWaiter')
+      .leftJoinAndSelect('order.waiter', 'waiter')
+      .leftJoinAndSelect('waiter.user', 'waiterUser')
+      .leftJoinAndSelect('order.orderItems', 'orderItems')
+      .leftJoinAndSelect('orderItems.inventory', 'inventory')
+      .leftJoinAndSelect('payment.verifiedBy', 'verifiedBy')
+      .where('tableWaiter.user_id = :userId', { userId })
+      .andWhere('payment.status = :status', { status: PaymentStatus.PENDING })
+      .orderBy('payment.created_at', 'ASC')
+      .getMany();
   }
 
   // Obtener pago por ID de orden

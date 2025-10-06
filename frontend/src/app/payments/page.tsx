@@ -74,7 +74,17 @@ function PaymentCard({ payment }: { payment: Payment }) {
   const MethodIcon = methodConf?.icon || CreditCardIcon;
 
   const canVerifyPayment = () => {
-    return (user?.role === 'admin' || user?.role === 'bar') && payment.status === 'pending';
+    if (payment.status !== 'pending') return false;
+    
+    if (user?.role === 'admin' || user?.role === 'bar') {
+      return true; // Admin and bar can verify any payment
+    }
+    
+    if (user?.role === 'waiter') {
+      return payment.method === 'cash'; // Waiters can only verify cash payments
+    }
+    
+    return false;
   };
 
   return (
@@ -294,10 +304,10 @@ export default function PaymentsPage() {
   const { user } = useAuth();
 
   const { data: pendingPayments, isLoading } = useQuery({
-    queryKey: ['payments', 'pending'],
-    queryFn: paymentsApi.getPending,
+    queryKey: ['payments', user?.role],
+    queryFn: user?.role === 'waiter' ? paymentsApi.getMyPayments : paymentsApi.getPending,
     refetchInterval: 10000, // Refresh every 10 seconds
-    enabled: user?.role === 'admin' || user?.role === 'bar',
+    enabled: !!user && (user?.role === 'admin' || user?.role === 'bar' || user?.role === 'waiter'),
   });
 
   if (isLoading) {
