@@ -53,10 +53,6 @@ function PaymentCard({ payment }: { payment: Payment }) {
   // Get order items from either property name (backend uses 'orderItems', some might use 'items')
   const orderItems = payment.order?.orderItems || payment.order?.items || [];
   
-  // Debug logging
-  console.log('Payment data:', payment);
-  console.log('Order items:', orderItems);
-  
   const verifyPaymentMutation = useMutation({
     mutationFn: (paymentId: number) => paymentsApi.verify(paymentId, {}),
     onSuccess: () => {
