@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   HomeIcon,
   ClipboardDocumentListIcon,
@@ -12,6 +12,8 @@ import {
   UserGroupIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
+  Bars3Icon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { cn, getRoleColor } from '@/lib/utils';
@@ -47,6 +49,7 @@ const navigation = {
 export default function Layout({ children }: LayoutProps) {
   const { user, logout, isLoading } = useAuth();
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -70,8 +73,68 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900">
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 z-50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        >
+          <div className="fixed inset-0 bg-gray-900/80" />
+          <div className="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 px-6 py-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-bold text-white">BarFlow</h1>
+              <button
+                type="button"
+                className="text-gray-300 hover:text-white"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <nav className="mt-8">
+              <ul role="list" className="space-y-1">
+                {userNavigation.map((item) => (
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      className="group flex gap-x-3 rounded-md p-3 text-sm leading-6 font-semibold text-gray-300 hover:text-white hover:bg-gray-800"
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <item.icon className="h-6 w-6 shrink-0" aria-hidden="true" />
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              
+              <div className="mt-8 pt-6 border-t border-gray-700">
+                <div className="flex items-center gap-x-3 px-3 py-2 text-sm font-semibold leading-6 text-gray-300">
+                  <div className="flex-auto">
+                    <div className="text-white text-sm">{user.username}</div>
+                    <div className={cn(
+                      'inline-flex items-center rounded-md px-2 py-1 text-xs font-medium border mt-1',
+                      getRoleColor(user.role)
+                    )}>
+                      {user.role.toUpperCase()}
+                    </div>
+                  </div>
+                  <button
+                    onClick={logout}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-300 hover:text-white hover:bg-gray-800"
+                    title="Sign out"
+                  >
+                    <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop sidebar */}
+      <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-64 lg:bg-gray-900">
         <div className="flex h-16 shrink-0 items-center px-6">
           <h1 className="text-xl font-bold text-white">BarFlow</h1>
         </div>
@@ -118,9 +181,34 @@ export default function Layout({ children }: LayoutProps) {
         </nav>
       </div>
 
+      {/* Mobile header */}
+      <div className="sticky top-0 z-40 lg:hidden">
+        <div className="flex h-16 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:px-6">
+          <button
+            type="button"
+            className="text-gray-700 hover:text-gray-900"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Bars3Icon className="h-6 w-6" />
+          </button>
+          <div className="flex-1 text-sm font-semibold leading-6 text-gray-900">
+            BarFlow
+          </div>
+          <div className="flex items-center gap-x-2">
+            <span className="text-sm text-gray-600">{user.username}</span>
+            <div className={cn(
+              'inline-flex items-center rounded-md px-2 py-1 text-xs font-medium border',
+              getRoleColor(user.role)
+            )}>
+              {user.role.toUpperCase()}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Main content */}
-      <div className="pl-64">
-        <main className="py-10">
+      <div className="lg:pl-64">
+        <main className="py-4 lg:py-10">
           <div className="px-4 sm:px-6 lg:px-8">
             {children}
           </div>

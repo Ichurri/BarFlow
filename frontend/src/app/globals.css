@@ -73,7 +73,6 @@ textarea::placeholder {
 
 @media (min-width: 640px) {
   .container-responsive {
-    max-width: 640px;
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }
@@ -81,27 +80,8 @@ textarea::placeholder {
 
 @media (min-width: 768px) {
   .container-responsive {
-    max-width: 768px;
     padding-left: 2rem;
     padding-right: 2rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .container-responsive {
-    max-width: 1024px;
-  }
-}
-
-@media (min-width: 1280px) {
-  .container-responsive {
-    max-width: 1280px;
-  }
-}
-
-@media (min-width: 1536px) {
-  .container-responsive {
-    max-width: 1536px;
   }
 }
 
@@ -165,7 +145,13 @@ textarea::placeholder {
 .card-responsive {
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  padding: 1rem;
+  padding: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .card-responsive {
+    padding: 1rem;
+  }
 }
 
 @media (min-width: 768px) {
@@ -176,8 +162,18 @@ textarea::placeholder {
 
 /* Button responsive */
 .btn-responsive {
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .btn-responsive {
+    padding: 0.5rem 1rem;
+  }
 }
 
 @media (min-width: 768px) {

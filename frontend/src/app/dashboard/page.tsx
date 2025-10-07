@@ -31,10 +31,10 @@ function StatCard({ title, value, icon: Icon, color, description }: StatCardProp
         </div>
         <div className="ml-3 sm:ml-5 w-0 flex-1">
           <dl>
-            <dt className="text-sm font-medium text-gray-500 truncate">{title}</dt>
-            <dd className="text-lg sm:text-xl font-medium text-gray-900">{value}</dd>
+            <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">{title}</dt>
+            <dd className="text-base sm:text-lg lg:text-xl font-medium text-gray-900">{value}</dd>
             {description && (
-              <dd className="text-xs sm:text-sm text-gray-500">{description}</dd>
+              <dd className="text-xs text-gray-500 mt-1">{description}</dd>
             )}
           </dl>
         </div>
@@ -196,7 +196,8 @@ export default function Dashboard() {
     <Layout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="text-center sm:text-left">
+        {/* Header */}
+        <div className="mb-6">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="mt-1 text-sm sm:text-base text-gray-500">
             Welcome back, {user?.username}! Here&apos;s what&apos;s happening today.
@@ -204,7 +205,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {dashboardStats.map((stat, index) => (
             <StatCard
               key={index}
@@ -218,7 +219,7 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+        <div className="bg-white shadow rounded-lg p-4 sm:p-6">
           <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
             Quick Actions
           </h3>
