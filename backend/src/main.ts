@@ -12,12 +12,20 @@ async function bootstrap() {
       ? [
           'https://bar-flow.vercel.app',
           'https://bar-flow-client.vercel.app',
+          'https://barflow-frontend.vercel.app',
           process.env.FRONTEND_URL,
+          process.env.FRONTEND_URL_ALT,
           'http://localhost:3000',
-          'http://localhost:3001'
+          'http://localhost:3001',
+          // Permitir cualquier subdominio de vercel para flexibilidad
+          /^https:\/\/.*\.vercel\.app$/
         ].filter(Boolean)
       : ['http://localhost:3001', 'http://localhost:3000'],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
   // Global validation pipe
