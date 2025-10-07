@@ -134,79 +134,75 @@ function TableOrderContent() {
     setShowPaymentOptions(true);
   };
 
-  // Crear orden después de seleccionar método de pago
-  const createOrderMutation = useMutation({
-    mutationFn: async (orderData: CreateOrder) => {
-      console.log('CreateOrder mutation called with:', orderData);
-      return ordersApi.createCustomer(orderData);
-    },
-    onSuccess: (order) => {
+  // Crear orden y pago cuando el cliente confirma el pago
+  const createOrderAndPaymentMutation = useMutation({
+    mutationFn: async ({ orderData, method }: { orderData: CreateOrder, method: 'cash' | 'qr' }) => {
+      console.log('Creating order and payment with method:', method);
+      // Primero crear la orden
+      const order = await ordersApi.createCustomer(orderData);
       console.log('Order created successfully:', order);
-      setCurrentOrder(order);
-      // Iniciar el proceso de pago
-      if (selectedPaymentMethod) {
-        initiatePaymentMutation.mutate({
-          orderId: order.id,
-          method: selectedPaymentMethod
-        });
-      }
-    },
-    onError: (error) => {
-      console.error('Error creating order:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
-    }
-  });
-
-  // Iniciar pago
-  const initiatePaymentMutation = useMutation({
-    mutationFn: async ({ orderId, method }: { orderId: number, method: 'cash' | 'qr' }) => {
-      console.log('Initiating payment for order:', orderId, 'method:', method);
-      return paymentsApi.initiateCustomer(orderId, method);
-    },
-    onSuccess: (payment) => {
+      
+      // Luego iniciar el pago
+      const payment = await paymentsApi.initiateCustomer(order.id, method);
       console.log('Payment initiated successfully:', payment);
-      setCurrentPayment(payment);
-      if (selectedPaymentMethod === 'qr') {
-        setShowQRPayment(true);
-        setShowPaymentOptions(false); // Hide payment options when showing QR
-      } else {
-        // Para efectivo, mostrar mensaje de espera
-        setIsOrderPlaced(true);
-        setCart([]);
-        setShowPaymentOptions(false);
+      
+      // Para QR, también confirmar el pago (cliente ya dice que pagó)
+      if (method === 'qr') {
+        await paymentsApi.confirmCustomer(payment.id);
+        console.log('QR Payment confirmed automatically');
       }
+      
+      return { order, payment };
     },
-    onError: (error) => {
-      console.error('Error initiating payment:', error);
-    }
-  });
-
-  // Confirmar que el cliente hizo el pago (esto enviará la solicitud a la barra)
-  const confirmPaymentMutation = useMutation({
-    mutationFn: async (paymentId: number) => {
-      console.log('Confirming payment:', paymentId);
-      // Solo confirmar que el cliente dice haber pagado, no aprobar automáticamente
-      return paymentsApi.confirmCustomer(paymentId);
-    },
-    onSuccess: (response) => {
-      console.log('Payment confirmed successfully:', response);
-      // No setear paymentConfirmed automáticamente
-      // La barra debe aprobar manualmente en su sistema
+    onSuccess: ({ order, payment }) => {
+      console.log('Order and payment created successfully:', { order, payment });
+      setCurrentOrder(order);
+      setCurrentPayment(payment);
+      
+      // Limpiar estado y mostrar éxito
       setShowQRPayment(false);
       setIsOrderPlaced(true);
       setCart([]);
       setShowPaymentOptions(false);
-      setSelectedPaymentMethod(null);
-      setCurrentPayment(null);
+      
+      // Limpiar después de un delay para que el usuario vea el mensaje
+      setTimeout(() => {
+        setSelectedPaymentMethod(null);
+        setCurrentPayment(null);
+      }, 100);
     },
     onError: (error) => {
-      console.error('Error confirming payment:', error);
+      console.error('Error creating order and payment:', error);
     }
   });
 
   const handlePaymentMethodSelect = (method: 'cash' | 'qr') => {
     setSelectedPaymentMethod(method);
     
+    if (method === 'qr') {
+      // Para QR, solo mostrar la pantalla de pago, no crear la orden todavía
+      setShowQRPayment(true);
+      setShowPaymentOptions(false);
+    } else {
+      // Para efectivo, crear orden inmediatamente ya que no necesita confirmación previa
+      const orderData = {
+        table_id: parseInt(tableId!),
+        items: cart.map(item => ({
+          inventory_id: item.id,
+          quantity: item.quantity,
+          unit_price: parseFloat(item.price.toString())
+        })),
+        status: 'pending',
+        notes: `Payment method: ${method}`
+      };
+
+      console.log('Creating cash order:', JSON.stringify(orderData, null, 2));
+      createOrderAndPaymentMutation.mutate({ orderData, method });
+    }
+  };
+
+  // Manejar confirmación de pago QR - crear orden cuando cliente confirma pago
+  const handleQRPaymentConfirmation = () => {
     const orderData = {
       table_id: parseInt(tableId!),
       items: cart.map(item => ({
@@ -215,11 +211,11 @@ function TableOrderContent() {
         unit_price: parseFloat(item.price.toString())
       })),
       status: 'pending',
-      notes: `Payment method: ${method}`
+      notes: `Payment method: qr`
     };
 
-    console.log('Sending order data:', JSON.stringify(orderData, null, 2));
-    createOrderMutation.mutate(orderData);
+    console.log('Creating QR order after payment confirmation:', JSON.stringify(orderData, null, 2));
+    createOrderAndPaymentMutation.mutate({ orderData, method: 'qr' });
   };
 
   if (!tableId) {
@@ -246,7 +242,7 @@ function TableOrderContent() {
           <div className="space-y-4">
             <button
               onClick={() => handlePaymentMethodSelect('qr')}
-              disabled={createOrderMutation.isPending || initiatePaymentMutation.isPending}
+              disabled={createOrderAndPaymentMutation.isPending}
               className="w-full flex items-center justify-center space-x-3 p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors disabled:opacity-50"
             >
               <QrCodeIcon className="h-6 w-6 text-purple-600" />
@@ -258,7 +254,7 @@ function TableOrderContent() {
             
             <button
               onClick={() => handlePaymentMethodSelect('cash')}
-              disabled={createOrderMutation.isPending || initiatePaymentMutation.isPending}
+              disabled={createOrderAndPaymentMutation.isPending}
               className="w-full flex items-center justify-center space-x-3 p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors disabled:opacity-50"
             >
               <BanknotesIcon className="h-6 w-6 text-green-600" />
@@ -276,7 +272,7 @@ function TableOrderContent() {
             Back to Cart
           </button>
           
-          {(createOrderMutation.isPending || initiatePaymentMutation.isPending) && (
+          {createOrderAndPaymentMutation.isPending && (
             <div className="mt-4 text-center text-gray-600">
               <ClockIcon className="inline h-4 w-4 mr-2" />
               Processing...
@@ -314,15 +310,11 @@ function TableOrderContent() {
           </p>
           
           <button
-            onClick={() => {
-              if (currentPayment?.id) {
-                confirmPaymentMutation.mutate(currentPayment.id);
-              }
-            }}
-            disabled={confirmPaymentMutation.isPending}
+            onClick={handleQRPaymentConfirmation}
+            disabled={createOrderAndPaymentMutation.isPending}
             className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 mb-4"
           >
-            {confirmPaymentMutation.isPending ? (
+            {createOrderAndPaymentMutation.isPending ? (
               <>
                 <ClockIcon className="inline h-4 w-4 mr-2" />
                 Confirming...
