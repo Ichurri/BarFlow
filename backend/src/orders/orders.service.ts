@@ -293,6 +293,10 @@ export class OrdersService {
     return await this.updateStatus(id, OrderStatus.CONFIRMED, user);
   }
 
+  async markPreparing(id: number, user: any): Promise<Order> {
+    return await this.updateStatus(id, OrderStatus.PREPARING, user);
+  }
+
   async markReady(id: number, user: any): Promise<Order> {
     const order = await this.updateStatus(id, OrderStatus.READY, user);
     
@@ -308,7 +312,12 @@ export class OrdersService {
   }
 
   async markDelivered(id: number, user: any): Promise<Order> {
-    return await this.updateStatus(id, OrderStatus.DELIVERED, user);
+    const order = await this.updateStatus(id, OrderStatus.DELIVERED, user);
+    
+    // Liberar la mesa cuando se entrega la orden
+    await this.tablesService.updateStatus(order.table_id, TableStatus.AVAILABLE, null);
+    
+    return order;
   }
 
   async remove(id: number): Promise<void> {

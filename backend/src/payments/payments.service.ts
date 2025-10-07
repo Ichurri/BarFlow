@@ -107,15 +107,12 @@ export class PaymentsService {
       verified_by: userId,
     });
 
-    // Completar la orden
+    // Confirmar la orden (próximo paso: barra marca como preparando)
     await this.ordersRepository.update(payment.order_id, {
-      status: OrderStatus.COMPLETED,
+      status: OrderStatus.CONFIRMED,
     });
 
-    // Liberar la mesa
-    await this.tablesRepository.update(payment.order.table_id, {
-      status: TableStatus.AVAILABLE,
-    });
+    // NO liberar la mesa todavía - se liberará cuando se marque como entregada
 
     // Log de verificación
     await this.createPaymentLog(paymentId, PaymentLogAction.VERIFIED, userId);

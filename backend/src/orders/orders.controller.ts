@@ -83,6 +83,13 @@ export class OrdersController {
     return this.ordersService.confirmOrder(+id, req.user);
   }
 
+  @Patch(':id/preparing')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.BAR, UserRole.ADMIN)
+  markPreparing(@Param('id') id: string, @Request() req) {
+    return this.ordersService.markPreparing(+id, req.user);
+  }
+
   @Patch(':id/ready')
   @UseGuards(RolesGuard)
   @Roles(UserRole.BAR, UserRole.ADMIN)

@@ -10,9 +10,14 @@ import { Order } from '@/types';
 
 const statusConfig = {
   pending: {
-    label: 'Pending',
+    label: 'Pending Payment',
     color: 'yellow',
     icon: ClockIcon,
+  },
+  confirmed: {
+    label: 'Payment Confirmed',
+    color: 'green',
+    icon: CheckIcon,
   },
   preparing: {
     label: 'Preparing',
@@ -21,7 +26,7 @@ const statusConfig = {
   },
   ready: {
     label: 'Ready',
-    color: 'green',
+    color: 'purple',
     icon: CheckIcon,
   },
   delivered: {
@@ -40,6 +45,34 @@ function OrderCard({ order }: { order: Order }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
+  const confirmOrderMutation = useMutation({
+    mutationFn: (orderId: number) => ordersApi.confirm(orderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+
+  const markPreparingMutation = useMutation({
+    mutationFn: (orderId: number) => ordersApi.markPreparing(orderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+
+  const markReadyMutation = useMutation({
+    mutationFn: (orderId: number) => ordersApi.markReady(orderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+
+  const deliverOrderMutation = useMutation({
+    mutationFn: (orderId: number) => ordersApi.deliver(orderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+
   const updateStatusMutation = useMutation({
     mutationFn: ({ orderId, status }: { orderId: number; status: Order['status'] }) =>
       ordersApi.updateStatus(orderId, { status }),
@@ -51,27 +84,51 @@ function OrderCard({ order }: { order: Order }) {
   const config = statusConfig[order.status as keyof typeof statusConfig];
   const IconComponent = config?.icon || ClockIcon;
 
-  const canUpdateStatus = () => {
-    if (user?.role === 'admin') return true;
-    if (user?.role === 'bar' && ['pending', 'preparing', 'ready'].includes(order.status)) return true;
-    if (user?.role === 'waiter' && order.status === 'ready') return true;
-    return false;
-  };
+  const getAvailableActions = () => {
+    const actions = [];
 
-  const getNextStatus = () => {
-    switch (order.status) {
-      case 'pending':
-        return 'preparing';
-      case 'preparing':
-        return 'ready';
-      case 'ready':
-        return 'delivered';
-      default:
-        return null;
+    // Admin puede hacer todo
+    if (user?.role === 'admin') {
+      switch (order.status) {
+        case 'pending':
+          actions.push({ type: 'confirm', label: 'Confirm Payment', mutation: confirmOrderMutation });
+          break;
+        case 'confirmed':
+          actions.push({ type: 'preparing', label: 'Start Preparing', mutation: markPreparingMutation });
+          break;
+        case 'preparing':
+          actions.push({ type: 'ready', label: 'Mark Ready', mutation: markReadyMutation });
+          break;
+        case 'ready':
+          actions.push({ type: 'deliver', label: 'Mark Delivered', mutation: deliverOrderMutation });
+          break;
+      }
     }
+    // Barra puede confirmar pagos y manejar preparación
+    else if (user?.role === 'bar') {
+      switch (order.status) {
+        case 'pending':
+          actions.push({ type: 'confirm', label: 'Confirm Payment', mutation: confirmOrderMutation });
+          break;
+        case 'confirmed':
+          actions.push({ type: 'preparing', label: 'Start Preparing', mutation: markPreparingMutation });
+          break;
+        case 'preparing':
+          actions.push({ type: 'ready', label: 'Mark Ready', mutation: markReadyMutation });
+          break;
+      }
+    }
+    // Mesero puede entregar órdenes listas
+    else if (user?.role === 'waiter') {
+      if (order.status === 'ready') {
+        actions.push({ type: 'deliver', label: 'Mark Delivered', mutation: deliverOrderMutation });
+      }
+    }
+
+    return actions;
   };
 
-  const nextStatus = getNextStatus();
+  const availableActions = getAvailableActions();
 
   return (
     <div className="card-responsive bg-white overflow-hidden shadow">
@@ -130,18 +187,23 @@ function OrderCard({ order }: { order: Order }) {
             {order.waiter?.user?.username && `Waiter: ${order.waiter.user.username}`}
           </div>
           <div className="flex space-x-2">
-            {canUpdateStatus() && nextStatus && (
+            {availableActions.map((action, index) => (
               <button
-                onClick={() => updateStatusMutation.mutate({
-                  orderId: order.id,
-                  status: nextStatus
-                })}
-                disabled={updateStatusMutation.isPending}
-                className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
+                key={action.type}
+                onClick={() => action.mutation.mutate(order.id)}
+                disabled={action.mutation.isPending}
+                className={cn(
+                  "inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50",
+                  action.type === 'confirm' ? "bg-green-600 hover:bg-green-700 focus:ring-green-500" :
+                  action.type === 'preparing' ? "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500" :
+                  action.type === 'ready' ? "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500" :
+                  action.type === 'deliver' ? "bg-gray-600 hover:bg-gray-700 focus:ring-gray-500" :
+                  "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500"
+                )}
               >
-                {updateStatusMutation.isPending ? 'Updating...' : `Mark as ${statusConfig[nextStatus as keyof typeof statusConfig]?.label}`}
+                {action.mutation.isPending ? 'Processing...' : action.label}
               </button>
-            )}
+            ))}
             {user?.role === 'admin' && order.status === 'pending' && (
               <button
                 onClick={() => updateStatusMutation.mutate({
@@ -188,7 +250,7 @@ export default function OrdersPage() {
   // Filter orders based on user role (backend already handles waiter filtering)
   const filteredOrders = orders?.filter(order => {
     if (user?.role === 'admin') return true;
-    if (user?.role === 'bar') return ['pending', 'preparing', 'ready'].includes(order.status);
+    if (user?.role === 'bar') return ['pending', 'confirmed', 'preparing', 'ready'].includes(order.status);
     if (user?.role === 'waiter') return true; // Backend already filters waiter orders
     return false;
   }) || [];

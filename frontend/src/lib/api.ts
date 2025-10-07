@@ -233,6 +233,11 @@ export const ordersApi = {
     return response.data;
   },
 
+  markPreparing: async (id: number): Promise<Order> => {
+    const response: AxiosResponse<Order> = await api.patch(`/orders/${id}/preparing`);
+    return response.data;
+  },
+
   markReady: async (id: number): Promise<Order> => {
     const response: AxiosResponse<Order> = await api.patch(`/orders/${id}/ready`);
     return response.data;
