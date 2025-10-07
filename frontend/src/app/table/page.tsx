@@ -452,18 +452,18 @@ function TableOrderContent() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="container-responsive grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Menu Section */}
         <div className="lg:col-span-2">
           {/* Categories */}
-          <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+          <div className="card-responsive bg-white shadow-sm mb-4 sm:mb-6">
             <div className="flex flex-wrap gap-2">
               {categories.map((category) => (
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
                   className={cn(
-                    'px-4 py-2 text-sm rounded-full transition-colors',
+                    'px-3 py-2 text-xs sm:text-sm rounded-full transition-colors',
                     selectedCategory === category
                       ? 'bg-purple-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -476,58 +476,53 @@ function TableOrderContent() {
           </div>
 
           {/* Menu Items */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid-responsive grid-responsive-md-2 gap-3 sm:gap-4">
             {filteredItems.map((item) => (
-              <div key={item.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-gray-900">{item.name}</h3>
-                    <span className="text-lg font-bold text-purple-600">
-                      {formatPrice(item.sale_price)}
+              <div key={item.id} className="card-responsive bg-white shadow-sm overflow-hidden">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">{item.name}</h3>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      {item.category}
                     </span>
+                    <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                      Stock: {item.stock}
+                    </p>
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        {item.category}
-                      </span>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Stock: {item.stock}
-                      </p>
-                    </div>
-                    
+                  <span className="text-base sm:text-lg font-bold text-purple-600 mt-2 sm:mt-0">
+                    {formatPrice(item.sale_price)}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-end space-x-2">
+                  {cart.find(cartItem => cartItem.id === item.id) ? (
                     <div className="flex items-center space-x-2">
-                      {cart.find(cartItem => cartItem.id === item.id) ? (
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => removeFromCart(item.id)}
-                            className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200"
-                          >
-                            <MinusIcon className="h-4 w-4" />
-                          </button>
-                          <span className="font-medium">
-                            {cart.find(cartItem => cartItem.id === item.id)?.quantity}
-                          </span>
-                          <button
-                            onClick={() => addToCart(item)}
-                            disabled={item.stock <= 0}
-                            className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center hover:bg-purple-200 disabled:opacity-50"
-                          >
-                            <PlusIcon className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => addToCart(item)}
-                          disabled={item.stock <= 0}
-                          className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700 disabled:opacity-50"
-                        >
-                          {item.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
-                        </button>
-                      )}
+                      <button
+                        onClick={() => removeFromCart(item.id)}
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200"
+                      >
+                        <MinusIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                      </button>
+                      <span className="font-medium text-sm sm:text-base">
+                        {cart.find(cartItem => cartItem.id === item.id)?.quantity}
+                      </span>
+                      <button
+                        onClick={() => addToCart(item)}
+                        disabled={item.stock <= 0}
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center hover:bg-purple-200 disabled:opacity-50"
+                      >
+                        <PlusIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                      </button>
                     </div>
-                  </div>
+                  ) : (
+                    <button
+                      onClick={() => addToCart(item)}
+                      disabled={item.stock <= 0}
+                      className="btn-responsive bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                    >
+                      {item.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

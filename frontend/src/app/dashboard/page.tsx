@@ -24,21 +24,19 @@ interface StatCardProps {
 
 function StatCard({ title, value, icon: Icon, color, description }: StatCardProps) {
   return (
-    <div className="bg-white overflow-hidden shadow rounded-lg">
-      <div className="p-5">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <Icon className={`h-6 w-6 ${color}`} aria-hidden="true" />
-          </div>
-          <div className="ml-5 w-0 flex-1">
-            <dl>
-              <dt className="text-sm font-medium text-gray-500 truncate">{title}</dt>
-              <dd className="text-lg font-medium text-gray-900">{value}</dd>
-              {description && (
-                <dd className="text-sm text-gray-500">{description}</dd>
-              )}
-            </dl>
-          </div>
+    <div className="bg-white overflow-hidden shadow rounded-lg p-4 sm:p-5">
+      <div className="flex items-center">
+        <div className="flex-shrink-0">
+          <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${color}`} aria-hidden="true" />
+        </div>
+        <div className="ml-3 sm:ml-5 w-0 flex-1">
+          <dl>
+            <dt className="text-sm font-medium text-gray-500 truncate">{title}</dt>
+            <dd className="text-lg sm:text-xl font-medium text-gray-900">{value}</dd>
+            {description && (
+              <dd className="text-xs sm:text-sm text-gray-500">{description}</dd>
+            )}
+          </dl>
         </div>
       </div>
     </div>
@@ -198,15 +196,15 @@ export default function Dashboard() {
     <Layout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-500">
+        <div className="text-center sm:text-left">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="mt-1 text-sm sm:text-base text-gray-500">
             Welcome back, {user?.username}! Here&apos;s what&apos;s happening today.
           </p>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {dashboardStats.map((stat, index) => (
             <StatCard
               key={index}
@@ -220,93 +218,91 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-              Quick Actions
-            </h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {user?.role === 'admin' && (
-                <>
-                  <a
-                    href="/inventory"
-                    className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500"
-                  >
-                    <ArchiveBoxIcon className="h-6 w-6 text-purple-600" />
-                    <div className="flex-1 min-w-0">
-                      <span className="absolute inset-0" aria-hidden="true" />
-                      <p className="text-sm font-medium text-gray-900">Manage Inventory</p>
-                      <p className="text-sm text-gray-500">Add or update products</p>
-                    </div>
-                  </a>
-                  <a
-                    href="/users"
-                    className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500"
-                  >
-                    <ChartBarIcon className="h-6 w-6 text-blue-600" />
-                    <div className="flex-1 min-w-0">
-                      <span className="absolute inset-0" aria-hidden="true" />
-                      <p className="text-sm font-medium text-gray-900">User Management</p>
-                      <p className="text-sm text-gray-500">Manage staff accounts</p>
-                    </div>
-                  </a>
-                </>
-              )}
-              
-              {(user?.role === 'bar' || user?.role === 'admin') && (
-                <>
-                  <a
-                    href="/orders"
-                    className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500"
-                  >
-                    <ClipboardDocumentListIcon className="h-6 w-6 text-yellow-600" />
-                    <div className="flex-1 min-w-0">
-                      <span className="absolute inset-0" aria-hidden="true" />
-                      <p className="text-sm font-medium text-gray-900">Pending Orders</p>
-                      <p className="text-sm text-gray-500">Review and confirm orders</p>
-                    </div>
-                  </a>
-                  <a
-                    href="/payments"
-                    className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500"
-                  >
-                    <CreditCardIcon className="h-6 w-6 text-amber-600" />
-                    <div className="flex-1 min-w-0">
-                      <span className="absolute inset-0" aria-hidden="true" />
-                      <p className="text-sm font-medium text-gray-900">Verify Payments</p>
-                      <p className="text-sm text-gray-500">Confirm cash payments</p>
-                    </div>
-                  </a>
-                </>
-              )}
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+            Quick Actions
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {user?.role === 'admin' && (
+              <>
+                <a
+                  href="/inventory"
+                  className="relative rounded-lg border border-gray-300 bg-white px-4 py-4 sm:px-6 sm:py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500 transition-colors duration-200"
+                >
+                  <ArchiveBoxIcon className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
+                  <div className="flex-1 min-w-0">
+                    <span className="absolute inset-0" aria-hidden="true" />
+                    <p className="text-sm font-medium text-gray-900">Manage Inventory</p>
+                    <p className="text-xs sm:text-sm text-gray-500">Add or update products</p>
+                  </div>
+                </a>
+                <a
+                  href="/users"
+                  className="relative rounded-lg border border-gray-300 bg-white px-4 py-4 sm:px-6 sm:py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500 transition-colors duration-200"
+                >
+                  <ChartBarIcon className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+                  <div className="flex-1 min-w-0">
+                    <span className="absolute inset-0" aria-hidden="true" />
+                    <p className="text-sm font-medium text-gray-900">User Management</p>
+                    <p className="text-xs sm:text-sm text-gray-500">Manage staff accounts</p>
+                  </div>
+                </a>
+              </>
+            )}
+            
+            {(user?.role === 'bar' || user?.role === 'admin') && (
+              <>
+                <a
+                  href="/orders"
+                  className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500"
+                >
+                  <ClipboardDocumentListIcon className="h-6 w-6 text-yellow-600" />
+                  <div className="flex-1 min-w-0">
+                    <span className="absolute inset-0" aria-hidden="true" />
+                    <p className="text-sm font-medium text-gray-900">Pending Orders</p>
+                    <p className="text-sm text-gray-500">Review and confirm orders</p>
+                  </div>
+                </a>
+                <a
+                  href="/payments"
+                  className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500"
+                >
+                  <CreditCardIcon className="h-6 w-6 text-amber-600" />
+                  <div className="flex-1 min-w-0">
+                    <span className="absolute inset-0" aria-hidden="true" />
+                    <p className="text-sm font-medium text-gray-900">Verify Payments</p>
+                    <p className="text-sm text-gray-500">Confirm cash payments</p>
+                  </div>
+                </a>
+              </>
+            )}
 
-              {user?.role === 'waiter' && (
-                <>
-                  <a
-                    href="/tables"
-                    className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500"
-                  >
-                    <TableCellsIcon className="h-6 w-6 text-indigo-600" />
-                    <div className="flex-1 min-w-0">
-                      <span className="absolute inset-0" aria-hidden="true" />
-                      <p className="text-sm font-medium text-gray-900">My Tables</p>
-                      <p className="text-sm text-gray-500">Manage assigned tables</p>
-                    </div>
-                  </a>
-                  <a
-                    href="/orders"
-                    className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500"
-                  >
-                    <ClipboardDocumentListIcon className="h-6 w-6 text-green-600" />
-                    <div className="flex-1 min-w-0">
-                      <span className="absolute inset-0" aria-hidden="true" />
-                      <p className="text-sm font-medium text-gray-900">Ready Orders</p>
-                      <p className="text-sm text-gray-500">Orders ready for delivery</p>
-                    </div>
-                  </a>
-                </>
-              )}
-            </div>
+            {user?.role === 'waiter' && (
+              <>
+                <a
+                  href="/tables"
+                  className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500"
+                >
+                  <TableCellsIcon className="h-6 w-6 text-indigo-600" />
+                  <div className="flex-1 min-w-0">
+                    <span className="absolute inset-0" aria-hidden="true" />
+                    <p className="text-sm font-medium text-gray-900">My Tables</p>
+                    <p className="text-sm text-gray-500">Manage assigned tables</p>
+                  </div>
+                </a>
+                <a
+                  href="/orders"
+                  className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500"
+                >
+                  <ClipboardDocumentListIcon className="h-6 w-6 text-green-600" />
+                  <div className="flex-1 min-w-0">
+                    <span className="absolute inset-0" aria-hidden="true" />
+                    <p className="text-sm font-medium text-gray-900">Ready Orders</p>
+                    <p className="text-sm text-gray-500">Orders ready for delivery</p>
+                  </div>
+                </a>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -74,34 +74,33 @@ function OrderCard({ order }: { order: Order }) {
   const nextStatus = getNextStatus();
 
   return (
-    <div className="bg-white overflow-hidden shadow rounded-lg">
-      <div className="px-4 py-5 sm:p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <IconComponent className={cn(
-                'h-8 w-8',
-                getStatusColor(order.status, 'text')
-              )} />
-            </div>
-            <div className="ml-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                Order #{order.id}
-              </h3>
-              <p className="text-sm text-gray-500">
-                Table {order.table?.id || order.table_id} • {new Date(order.created_at).toLocaleTimeString()}
-              </p>
-            </div>
+    <div className="card-responsive bg-white overflow-hidden shadow">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
+        <div className="flex items-center">
+          <div className="flex-shrink-0">
+            <IconComponent className={cn(
+              'h-6 w-6 sm:h-8 sm:w-8',
+              getStatusColor(order.status, 'text')
+            )} />
           </div>
-          <span className={cn(
-            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-            getStatusColor(order.status, 'badge')
-          )}>
-            {config?.label || order.status}
-          </span>
+          <div className="ml-3 sm:ml-4">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900">
+              Order #{order.id}
+            </h3>
+            <p className="text-xs sm:text-sm text-gray-500">
+              Table {order.table?.id || order.table_id} • {new Date(order.created_at).toLocaleTimeString()}
+            </p>
+          </div>
         </div>
+        <span className={cn(
+          'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium self-start sm:self-auto',
+          getStatusColor(order.status, 'badge')
+        )}>
+          {config?.label || order.status}
+        </span>
+      </div>
 
-        <div className="mt-4">
+      <div className="mt-4">
           <h4 className="text-sm font-medium text-gray-900 mb-2">Items:</h4>
           <ul className="space-y-1">
             {(order.orderItems || order.items || []).map((item, index) => (
@@ -124,9 +123,9 @@ function OrderCard({ order }: { order: Order }) {
               <span>{formatCurrency(order.total_amount)}</span>
             </div>
           </div>
-        </div>
+      </div>
 
-        <div className="mt-4 flex justify-between items-center">
+      <div className="mt-4 flex justify-between items-center">
           <div className="text-sm text-gray-500">
             {order.waiter?.user?.username && `Waiter: ${order.waiter.user.username}`}
           </div>
@@ -155,7 +154,6 @@ function OrderCard({ order }: { order: Order }) {
                 Cancel
               </button>
             )}
-          </div>
         </div>
       </div>
     </div>
@@ -208,9 +206,9 @@ export default function OrdersPage() {
     <Layout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Orders Management</h1>
-          <p className="mt-1 text-sm text-gray-500">
+        <div className="text-center sm:text-left">
+          <h1 className="heading-responsive font-bold text-gray-900">Orders Management</h1>
+          <p className="mt-1 text-responsive text-gray-500">
             {user?.role === 'bar' ? 'Prepare and manage drink orders' : 
              user?.role === 'waiter' ? 'View and deliver orders' : 
              'Monitor all orders and operations'}
@@ -218,7 +216,7 @@ export default function OrdersPage() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid-responsive grid-responsive-sm-2 grid-responsive-lg-4 gap-4 sm:gap-5">
           {Object.entries(ordersByStatus).map(([status, statusOrders]) => {
             const config = statusConfig[status as keyof typeof statusConfig];
             return (
