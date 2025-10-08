@@ -317,16 +317,16 @@ export class OrdersService {
       
       if (currentInventory.stock < item.quantity) {
         console.warn(`Warning: Insufficient stock for item ${currentInventory.name}. Required: ${item.quantity}, Available: ${currentInventory.stock}`);
-        // Aún así descontamos lo disponible (podría ser un caso edge)
+        // Descontamos solo lo disponible
         await this.inventoryService.updateStock(
           item.inventory_id,
-          Math.max(0, currentInventory.stock - item.quantity)
+          -currentInventory.stock // Negativo porque updateStock suma la diferencia
         );
       } else {
-        // Stock suficiente, descontar normalmente
+        // Stock suficiente, descontar la cantidad pedida
         await this.inventoryService.updateStock(
           item.inventory_id,
-          currentInventory.stock - item.quantity
+          -item.quantity // Negativo porque updateStock suma la diferencia
         );
       }
     }
