@@ -256,6 +256,11 @@ export const ordersApi = {
   delete: async (id: number): Promise<void> => {
     await api.delete(`/orders/${id}`);
   },
+
+  getItemsStats: async (): Promise<any> => {
+    const response: AxiosResponse<any> = await api.get('/orders/items/stats');
+    return response.data;
+  },
 };
 
 // Payments API
