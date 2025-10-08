@@ -11,17 +11,11 @@ import {
   ArchiveBoxIcon,
   TableCellsIcon,
   CreditCardIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
-  ClockIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  FireIcon,
-  ChartPieIcon,
   UsersIcon,
-  CalendarDaysIcon,
   BellIcon,
   RocketLaunchIcon,
 } from '@heroicons/react/24/outline';
@@ -38,8 +32,8 @@ import {
   ArcElement,
   Filler
 } from 'chart.js';
-import { Line, Bar, Doughnut } from 'react-chartjs-2';
-import { format, subDays, isToday, isYesterday } from 'date-fns';
+import { Line, Doughnut } from 'react-chartjs-2';
+import { format } from 'date-fns';
 import { formatCurrency, cn } from '@/lib/utils';
 
 // Register Chart.js components
@@ -57,7 +51,7 @@ ChartJS.register(
 );
 
 // Quick Stats Grid Component
-function QuickStatsGrid({ user, stats }: { user: any, stats: any[] }) {
+function QuickStatsGrid({ stats }: { stats: StatCardProps[] }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat, index) => (
@@ -75,9 +69,19 @@ function QuickStatsGrid({ user, stats }: { user: any, stats: any[] }) {
 }
 
 // Top Items Component
+interface ItemData {
+  inventory_id?: number;
+  name: string;
+  category: string;
+  total_sold?: number;
+  recent_sales?: number;
+  total_profit?: number;
+  profit_margin?: number;
+}
+
 function TopItemsCard({ title, items, type }: { 
   title: string; 
-  items: any[]; 
+  items: ItemData[]; 
   type: 'best' | 'worst' | 'profitable' | 'trending' 
 }) {
   const getItemIcon = (type: string) => {
@@ -131,10 +135,10 @@ function TopItemsCard({ title, items, type }: {
                 {type === 'profitable' ? (
                   <div>
                     <p className="font-semibold text-green-600">
-                      +${parseFloat(item.total_profit).toFixed(2)}
+                      +${(item.total_profit || 0).toFixed(2)}
                     </p>
                     <p className="text-xs text-gray-600">
-                      {parseFloat(item.profit_margin).toFixed(1)}% margen
+                      {(item.profit_margin || 0).toFixed(1)}% margen
                     </p>
                   </div>
                 ) : (
@@ -159,7 +163,13 @@ function TopItemsCard({ title, items, type }: {
 }
 
 // Categories Performance Component
-function CategoriesChart({ data }: { data: any[] }) {
+interface CategoryData {
+  category: string;
+  total_sold: number;
+  total_revenue: number;
+}
+
+function CategoriesChart({ data }: { data: CategoryData[] }) {
   if (!data || data.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
@@ -217,7 +227,7 @@ function CategoriesChart({ data }: { data: any[] }) {
             </div>
             <div className="text-right">
               <p className="font-semibold">{category.total_sold}</p>
-              <p className="text-xs text-gray-600">${parseFloat(category.total_revenue).toFixed(2)}</p>
+              <p className="text-xs text-gray-600">${category.total_revenue.toFixed(2)}</p>
             </div>
           </div>
         ))}
@@ -231,15 +241,14 @@ interface StatCardProps {
   value: string | number;
   icon: React.ComponentType<{ className?: string }>;
   color: string;
-  description?: string;
-  trend?: {
-    value: number;
-    isPositive: boolean;
-    period: string;
-  };
+  description: string;
+  trend?: 'up' | 'down' | 'stable';
+  trendValue?: number;
 }
 
-function StatCard({ title, value, icon: Icon, color, description, trend }: StatCardProps) {
+
+
+function StatCard({ title, value, icon: Icon, color, description }: StatCardProps) {
   return (
     <div className="bg-white overflow-hidden shadow-lg rounded-xl p-6 hover:shadow-xl transition-shadow duration-300">
       <div className="flex items-center justify-between">
@@ -250,18 +259,6 @@ function StatCard({ title, value, icon: Icon, color, description, trend }: StatC
             </div>
           </div>
         </div>
-        {trend && (
-          <div className="flex items-center">
-            {trend.isPositive ? (
-              <ArrowUpIcon className="h-4 w-4 text-green-500" />
-            ) : (
-              <ArrowDownIcon className="h-4 w-4 text-red-500" />
-            )}
-            <span className={`text-sm font-medium ml-1 ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-              {Math.abs(trend.value)}%
-            </span>
-          </div>
-        )}
       </div>
       <div className="mt-4">
         <dl>
@@ -269,9 +266,6 @@ function StatCard({ title, value, icon: Icon, color, description, trend }: StatC
           <dd className="mt-1 text-3xl font-bold text-gray-900">{value}</dd>
           {description && (
             <dd className="text-sm text-gray-600 mt-1">{description}</dd>
-          )}
-          {trend && (
-            <dd className="text-xs text-gray-400 mt-1">vs {trend.period}</dd>
           )}
         </dl>
       </div>
@@ -385,12 +379,6 @@ export default function Dashboard() {
   };
 
   // Calculations for trends
-  const calculateTrend = (current: number, previous: number): 'up' | 'down' | 'stable' => {
-    if (current > previous) return 'up';
-    if (current < previous) return 'down';
-    return 'stable';
-  };
-
   const calculatePercentageChange = (current: number, previous: number): number => {
     if (previous === 0) return current > 0 ? 100 : 0;
     return Math.round(((current - previous) / previous) * 100);
@@ -638,7 +626,7 @@ export default function Dashboard() {
         </div>
 
         {/* Enhanced Stats Grid */}
-        <QuickStatsGrid user={user} stats={dashboardStats} />
+        <QuickStatsGrid stats={dashboardStats} />
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1063,7 +1051,7 @@ export default function Dashboard() {
                     </div>
                     
                     <div className="max-h-48 overflow-y-auto space-y-2">
-                      {itemsStats.neverSoldItems.slice(0, 8).map((item: any) => (
+                      {itemsStats.neverSoldItems.slice(0, 8).map((item: { id: number; name: string; category: string; sale_price: number; stock: number }) => (
                         <div key={item.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                           <div>
                             <p className="text-sm font-medium text-gray-900">{item.name}</p>
@@ -1130,7 +1118,7 @@ export default function Dashboard() {
                   
                   <div className="bg-white rounded-lg p-4 text-center">
                     <p className="text-2xl font-bold text-purple-600">
-                      {itemsStats.profitabilityAnalysis.reduce((sum: number, item: any) => sum + (item.total_profit || 0), 0).toFixed(2)}
+                      {itemsStats.profitabilityAnalysis.reduce((sum: number, item: ItemData) => sum + (item.total_profit || 0), 0).toFixed(2)}
                     </p>
                     <p className="text-sm text-gray-600">Ganancia total</p>
                     <p className="text-xs text-gray-500 mt-1">Top 10 productos</p>
