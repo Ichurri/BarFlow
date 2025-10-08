@@ -109,8 +109,8 @@ export class OrdersService {
         price: unitPrice,
       });
 
-      // Reducir stock
-      await this.inventoryService.reduceStock(item.inventory_id, item.quantity);
+      // NO reducir stock todavía - se reducirá cuando se entregue la orden
+      // Solo se verifica que hay stock disponible arriba
     }
 
     // Crear la orden
@@ -300,19 +300,36 @@ export class OrdersService {
   async markReady(id: number, user: any): Promise<Order> {
     const order = await this.updateStatus(id, OrderStatus.READY, user);
     
-    // Actualizar stock del inventario
-    for (const item of order.orderItems) {
-      await this.inventoryService.updateStock(
-        item.inventory_id,
-        item.inventory.stock - item.quantity
-      );
-    }
-
+    // NO actualizar stock aquí - se actualizará cuando se entregue
+    // El stock se descuenta al entregar, no al marcar como listo
+    
     return order;
   }
 
   async markDelivered(id: number, user: any): Promise<Order> {
     const order = await this.updateStatus(id, OrderStatus.DELIVERED, user);
+    
+    // AQUÍ es donde realmente descontamos el stock del inventario
+    // Solo cuando la orden se entrega efectivamente
+    for (const item of order.orderItems) {
+      // Verificar stock actual antes de descontar
+      const currentInventory = await this.inventoryService.findOne(item.inventory_id);
+      
+      if (currentInventory.stock < item.quantity) {
+        console.warn(`Warning: Insufficient stock for item ${currentInventory.name}. Required: ${item.quantity}, Available: ${currentInventory.stock}`);
+        // Aún así descontamos lo disponible (podría ser un caso edge)
+        await this.inventoryService.updateStock(
+          item.inventory_id,
+          Math.max(0, currentInventory.stock - item.quantity)
+        );
+      } else {
+        // Stock suficiente, descontar normalmente
+        await this.inventoryService.updateStock(
+          item.inventory_id,
+          currentInventory.stock - item.quantity
+        );
+      }
+    }
     
     // Liberar la mesa cuando se entrega la orden
     await this.tablesService.updateStatus(order.table_id, TableStatus.AVAILABLE, null);
