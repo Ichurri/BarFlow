@@ -379,4 +379,160 @@ export class OrdersService {
 
     return validTransitions[currentStatus]?.includes(newStatus) || false;
   }
+
+  async getItemsStats(): Promise<any> {
+    // Items más vendidos
+    const mostSoldItems = await this.orderItemsRepository
+      .createQueryBuilder('oi')
+      .select([
+        'oi.inventory_id as inventory_id',
+        'i.name as name',
+        'i.category as category',
+        'i.sale_price as price',
+        'SUM(oi.quantity) as total_sold',
+        'COUNT(DISTINCT oi.order_id) as orders_count',
+        'SUM(oi.price * oi.quantity) as total_revenue'
+      ])
+      .leftJoin('inventory', 'i', 'oi.inventory_id = i.id')
+      .leftJoin('orders', 'o', 'oi.order_id = o.id')
+      .where('o.status IN (:...statuses)', { 
+        statuses: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] 
+      })
+      .groupBy('oi.inventory_id, i.name, i.category, i.sale_price')
+      .orderBy('total_sold', 'DESC')
+      .limit(10)
+      .getRawMany();
+
+    // Items menos vendidos (que han sido vendidos al menos una vez)
+    const leastSoldItems = await this.orderItemsRepository
+      .createQueryBuilder('oi')
+      .select([
+        'oi.inventory_id as inventory_id',
+        'i.name as name',
+        'i.category as category',
+        'i.sale_price as price',
+        'SUM(oi.quantity) as total_sold',
+        'COUNT(DISTINCT oi.order_id) as orders_count',
+        'SUM(oi.price * oi.quantity) as total_revenue'
+      ])
+      .leftJoin('inventory', 'i', 'oi.inventory_id = i.id')
+      .leftJoin('orders', 'o', 'oi.order_id = o.id')
+      .where('o.status IN (:...statuses)', { 
+        statuses: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] 
+      })
+      .groupBy('oi.inventory_id, i.name, i.category, i.sale_price')
+      .orderBy('total_sold', 'ASC')
+      .limit(5)
+      .getRawMany();
+
+    // Items por categoría
+    const itemsByCategory = await this.orderItemsRepository
+      .createQueryBuilder('oi')
+      .select([
+        'i.category as category',
+        'SUM(oi.quantity) as total_sold',
+        'COUNT(DISTINCT oi.inventory_id) as unique_items',
+        'SUM(oi.price * oi.quantity) as total_revenue'
+      ])
+      .leftJoin('inventory', 'i', 'oi.inventory_id = i.id')
+      .leftJoin('orders', 'o', 'oi.order_id = o.id')
+      .where('o.status IN (:...statuses)', { 
+        statuses: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] 
+      })
+      .groupBy('i.category')
+      .orderBy('total_sold', 'DESC')
+      .getRawMany();
+
+    // Items nunca vendidos - obtenemos todos los items y luego filtramos
+    const allItems = await this.inventoryService.findAll();
+    const soldItemIds = mostSoldItems.concat(leastSoldItems).map(item => item.inventory_id);
+    const neverSoldItems = allItems.filter(item => !soldItemIds.includes(item.id));
+
+    // Análisis de rentabilidad (items con mayor margen)
+    const profitabilityAnalysis = await this.orderItemsRepository
+      .createQueryBuilder('oi')
+      .select([
+        'oi.inventory_id as inventory_id',
+        'i.name as name',
+        'i.category as category',
+        'i.cost_price as cost_price',
+        'i.sale_price as sale_price',
+        'SUM(oi.quantity) as total_sold',
+        'SUM(oi.price * oi.quantity) as total_revenue',
+        'SUM(oi.quantity * i.cost_price) as total_cost',
+        '(SUM(oi.price * oi.quantity) - SUM(oi.quantity * i.cost_price)) as total_profit',
+        '((SUM(oi.price * oi.quantity) - SUM(oi.quantity * i.cost_price)) / SUM(oi.price * oi.quantity) * 100) as profit_margin'
+      ])
+      .leftJoin('inventory', 'i', 'oi.inventory_id = i.id')
+      .leftJoin('orders', 'o', 'oi.order_id = o.id')
+      .where('o.status IN (:...statuses)', { 
+        statuses: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] 
+      })
+      .andWhere('i.cost_price IS NOT NULL')
+      .groupBy('oi.inventory_id, i.name, i.category, i.cost_price, i.sale_price')
+      .orderBy('total_profit', 'DESC')
+      .limit(10)
+      .getRawMany();
+
+    // Tendencias recientes (últimos 7 días)
+    const recentTrends = await this.orderItemsRepository
+      .createQueryBuilder('oi')
+      .select([
+        'oi.inventory_id as inventory_id',
+        'i.name as name',
+        'SUM(oi.quantity) as recent_sales',
+        'COUNT(DISTINCT oi.order_id) as recent_orders'
+      ])
+      .leftJoin('inventory', 'i', 'oi.inventory_id = i.id')
+      .leftJoin('orders', 'o', 'oi.order_id = o.id')
+      .where('o.status IN (:...statuses)', { 
+        statuses: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] 
+      })
+      .andWhere('o.created_at >= :sevenDaysAgo', { 
+        sevenDaysAgo: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) 
+      })
+      .groupBy('oi.inventory_id, i.name')
+      .orderBy('recent_sales', 'DESC')
+      .limit(5)
+      .getRawMany();
+
+    return {
+      mostSoldItems: mostSoldItems.map(item => ({
+        ...item,
+        total_sold: parseInt(item.total_sold),
+        orders_count: parseInt(item.orders_count),
+        total_revenue: parseFloat(item.total_revenue),
+        price: parseFloat(item.price)
+      })),
+      leastSoldItems: leastSoldItems.map(item => ({
+        ...item,
+        total_sold: parseInt(item.total_sold),
+        orders_count: parseInt(item.orders_count),
+        total_revenue: parseFloat(item.total_revenue),
+        price: parseFloat(item.price)
+      })),
+      itemsByCategory: itemsByCategory.map(cat => ({
+        ...cat,
+        total_sold: parseInt(cat.total_sold),
+        unique_items: parseInt(cat.unique_items),
+        total_revenue: parseFloat(cat.total_revenue)
+      })),
+      neverSoldItems,
+      profitabilityAnalysis: profitabilityAnalysis.map(item => ({
+        ...item,
+        total_sold: parseInt(item.total_sold),
+        total_revenue: parseFloat(item.total_revenue),
+        total_cost: parseFloat(item.total_cost),
+        total_profit: parseFloat(item.total_profit),
+        profit_margin: parseFloat(item.profit_margin),
+        cost_price: parseFloat(item.cost_price),
+        sale_price: parseFloat(item.sale_price)
+      })),
+      recentTrends: recentTrends.map(item => ({
+        ...item,
+        recent_sales: parseInt(item.recent_sales),
+        recent_orders: parseInt(item.recent_orders)
+      }))
+    };
+  }
 }

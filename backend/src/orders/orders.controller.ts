@@ -111,6 +111,13 @@ export class OrdersController {
     return this.ordersService.requestPayment(+id, req.user);
   }
 
+  @Get('items/stats')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.BAR)
+  getItemsStats() {
+    return this.ordersService.getItemsStats();
+  }
+
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
