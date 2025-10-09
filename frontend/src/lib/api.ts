@@ -265,8 +265,32 @@ export const ordersApi = {
 
 // Payments API
 export const paymentsApi = {
-  getAll: async (): Promise<Payment[]> => {
-    const response: AxiosResponse<Payment[]> = await api.get('/payments');
+  getAll: async (filters?: {
+    status?: string;
+    method?: string;
+    from_date?: string;
+    to_date?: string;
+    table_id?: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    payments: Payment[];
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  }> => {
+    const params = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, value.toString());
+        }
+      });
+    }
+    const queryString = params.toString();
+    const url = queryString ? `/payments/all?${queryString}` : '/payments/all';
+    const response = await api.get(url);
     return response.data;
   },
 
