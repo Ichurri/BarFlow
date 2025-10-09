@@ -52,6 +52,13 @@ export class PaymentsController {
     return this.paymentsService.rejectPayment(+id, req.user.id, req.user.role, body.reason);
   }
 
+  @Get('all')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.BAR, UserRole.ADMIN, UserRole.WAITER)
+  async getAllPayments(@Request() req, @Query() query: any) {
+    return this.paymentsService.getAllPayments(req.user.role, req.user.id, query);
+  }
+
   @Get('pending')
   @UseGuards(RolesGuard)
   @Roles(UserRole.BAR, UserRole.ADMIN)

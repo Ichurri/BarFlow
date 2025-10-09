@@ -166,6 +166,73 @@ export class PaymentsService {
     };
   }
 
+  // Obtener todos los pagos con filtros opcionales
+  async getAllPayments(userRole: UserRole, userId: number, query: any = {}) {
+    const { status, method, from_date, to_date, table_id, limit = 50, offset = 0 } = query;
+
+    let queryBuilder = this.paymentsRepository.createQueryBuilder('payment')
+      .leftJoinAndSelect('payment.order', 'order')
+      .leftJoinAndSelect('order.table', 'table')
+      .leftJoinAndSelect('table.waiter', 'tableWaiter')
+      .leftJoinAndSelect('order.waiter', 'waiter')
+      .leftJoinAndSelect('waiter.user', 'waiterUser')
+      .leftJoinAndSelect('order.orderItems', 'orderItems')
+      .leftJoinAndSelect('orderItems.inventory', 'inventory')
+      .leftJoinAndSelect('payment.verifiedBy', 'verifiedBy')
+      .leftJoinAndSelect('payment.paymentLogs', 'paymentLogs')
+      .leftJoinAndSelect('paymentLogs.user', 'logUser');
+
+    // Restricciones por rol
+    if (userRole === UserRole.WAITER) {
+      // Los waiters solo ven pagos de sus mesas asignadas
+      queryBuilder = queryBuilder.where('tableWaiter.user_id = :userId', { userId });
+    }
+    // BAR y ADMIN pueden ver todos los pagos (sin restricciones adicionales)
+
+    // Filtros opcionales
+    if (status) {
+      queryBuilder = queryBuilder.andWhere('payment.status = :status', { status });
+    }
+
+    if (method) {
+      queryBuilder = queryBuilder.andWhere('payment.method = :method', { method });
+    }
+
+    if (table_id) {
+      queryBuilder = queryBuilder.andWhere('order.table_id = :table_id', { table_id: parseInt(table_id) });
+    }
+
+    if (from_date) {
+      queryBuilder = queryBuilder.andWhere('payment.created_at >= :from_date', { 
+        from_date: new Date(from_date) 
+      });
+    }
+
+    if (to_date) {
+      queryBuilder = queryBuilder.andWhere('payment.created_at <= :to_date', { 
+        to_date: new Date(to_date) 
+      });
+    }
+
+    // Paginación y orden
+    const payments = await queryBuilder
+      .orderBy('payment.created_at', 'DESC')
+      .skip(parseInt(offset))
+      .take(parseInt(limit))
+      .getMany();
+
+    // Contar total para paginación
+    const total = await queryBuilder.getCount();
+
+    return {
+      payments,
+      total,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      hasMore: (parseInt(offset) + parseInt(limit)) < total
+    };
+  }
+
   // Obtener pagos pendientes (para BAR)
   async getPendingPayments(userRole: UserRole) {
     if (userRole !== UserRole.BAR && userRole !== UserRole.ADMIN) {
