@@ -23,7 +23,9 @@
     "migration:run": "npm run typeorm -- migration:run -d src/config/database.config.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d src/config/database.config.ts",
     "seed": "ts-node src/database/seed.ts",
-    "seed:nightclub": "ts-node src/database/seed-nightclub.ts"
+    "seed:nightclub": "ts-node src/database/seed-nightclub.ts",
+    "reset-ids": "ts-node src/scripts/reset-ids.ts",
+    "reset-orders": "ts-node src/scripts/reset-orders-payments-ids.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
