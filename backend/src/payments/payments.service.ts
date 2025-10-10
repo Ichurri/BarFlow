@@ -179,7 +179,7 @@ export class PaymentsService {
       .leftJoinAndSelect('order.orderItems', 'orderItems')
       .leftJoinAndSelect('orderItems.inventory', 'inventory')
       .leftJoinAndSelect('payment.verifiedBy', 'verifiedBy')
-      .leftJoinAndSelect('payment.paymentLogs', 'paymentLogs')
+      .leftJoinAndSelect('payment.logs', 'paymentLogs')
       .leftJoinAndSelect('paymentLogs.user', 'logUser');
 
     // Restricciones por rol
