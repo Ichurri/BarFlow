@@ -223,7 +223,7 @@ function TableOrderContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Invalid Table</h1>
-          <p className="text-gray-600">Please scan a valid QR code to access the menu.</p>
+          <p className="text-gray-800 font-medium">Please scan a valid QR code to access the menu.</p>
         </div>
       </div>
     );
@@ -235,7 +235,7 @@ function TableOrderContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
           <h2 className="text-xl font-bold text-gray-900 mb-6 text-center">Select Payment Method</h2>
-          <p className="text-gray-600 mb-6 text-center">
+          <p className="text-gray-800 mb-6 text-center font-medium">
             Total: <span className="font-bold text-lg">{formatPrice(getTotalPrice())}</span>
           </p>
           
@@ -248,7 +248,7 @@ function TableOrderContent() {
               <QrCodeIcon className="h-6 w-6 text-purple-600" />
               <div className="text-left">
                 <div className="font-semibold text-gray-900">Pay with QR Code</div>
-                <div className="text-sm text-gray-600">Scan and pay instantly</div>
+                <div className="text-sm text-gray-700 font-medium">Scan and pay instantly</div>
               </div>
             </button>
             
@@ -260,20 +260,20 @@ function TableOrderContent() {
               <BanknotesIcon className="h-6 w-6 text-green-600" />
               <div className="text-left">
                 <div className="font-semibold text-gray-900">Pay with Cash</div>
-                <div className="text-sm text-gray-600">Pay when waiter arrives</div>
+                <div className="text-sm text-gray-700 font-medium">Pay when waiter arrives</div>
               </div>
             </button>
           </div>
           
           <button
             onClick={() => setShowPaymentOptions(false)}
-            className="w-full mt-6 py-2 px-4 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="w-full mt-6 py-2 px-4 text-gray-700 font-medium border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             Back to Cart
           </button>
           
           {createOrderAndPaymentMutation.isPending && (
-            <div className="mt-4 text-center text-gray-600">
+            <div className="mt-4 text-center text-gray-700 font-medium">
               <ClockIcon className="inline h-4 w-4 mr-2" />
               Processing...
             </div>
@@ -289,7 +289,7 @@ function TableOrderContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Scan QR Code to Pay</h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-800 font-semibold mb-6">
             Total: <span className="font-bold text-lg">{formatPrice(getTotalPrice())}</span>
           </p>
           
@@ -305,7 +305,7 @@ function TableOrderContent() {
             </div>
           </div>
           
-          <p className="text-sm text-gray-600 mb-6">
+          <p className="text-sm text-gray-700 font-medium mb-6">
             Scan this QR code with your banking app to complete the payment
           </p>
           
@@ -329,7 +329,7 @@ function TableOrderContent() {
               setShowQRPayment(false);
               setShowPaymentOptions(true);
             }}
-            className="w-full py-2 px-4 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="w-full py-2 px-4 text-gray-700 font-medium border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             Back to Payment Options
           </button>
@@ -353,7 +353,7 @@ function TableOrderContent() {
             Order Submitted Successfully!
           </h2>
           
-          <div className="text-gray-600 mb-6">
+          <div className="text-gray-700 font-medium mb-6">
             {isQRPayment && (
               <p>Your payment confirmation has been sent to our staff. They will verify the payment and prepare your order. Please wait for confirmation from the bar.</p>
             )}
@@ -387,7 +387,7 @@ function TableOrderContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading table information...</p>
+          <p className="text-gray-700 font-medium">Loading table information...</p>
         </div>
       </div>
     );
@@ -401,10 +401,10 @@ function TableOrderContent() {
             <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
           </div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">Table Not Found</h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-700 font-medium mb-6">
             Table #{tableId} does not exist or is not available.
           </p>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-gray-700 font-medium mb-4">
             Available tables: 111, 112, 113, 114, 115, 116, 117, 118, 119, 120
           </p>
           <button
@@ -426,7 +426,7 @@ function TableOrderContent() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">BarFlow Menu</h1>
-              <p className="text-gray-600">
+              <p className="text-gray-800 font-semibold">
                 Table: #{tableId}
               </p>
             </div>
@@ -477,7 +477,7 @@ function TableOrderContent() {
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                       {item.category}
                     </span>
-                    <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                    <p className="text-xs sm:text-sm text-gray-700 font-medium mt-1">
                       Stock: {item.stock}
                     </p>
                   </div>
@@ -522,7 +522,7 @@ function TableOrderContent() {
 
           {filteredItems.length === 0 && (
             <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-              <p className="text-gray-500">No items found in this category.</p>
+              <p className="text-gray-700 font-medium">No items found in this category.</p>
             </div>
           )}
         </div>
@@ -548,8 +548,8 @@ function TableOrderContent() {
               {cart.length === 0 ? (
                 <div className="text-center py-8">
                   <ShoppingCartIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">Your cart is empty</p>
-                  <p className="text-sm text-gray-400">Add items to get started</p>
+                  <p className="text-gray-700 font-medium">Your cart is empty</p>
+                  <p className="text-sm text-gray-700">Add items to get started</p>
                 </div>
               ) : (
                 <>
@@ -558,12 +558,12 @@ function TableOrderContent() {
                       <div key={item.id} className="flex items-center justify-between">
                         <div className="flex-1">
                           <h4 className="font-medium text-gray-900">{item.name}</h4>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-700 font-medium">
                             {formatPrice(item.price)} × {item.quantity}
                           </p>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <span className="font-medium">
+                          <span className="font-medium text-gray-900">
                             {formatPrice(item.price * item.quantity)}
                           </span>
                           <button
@@ -578,7 +578,7 @@ function TableOrderContent() {
                   </div>
 
                   <div className="border-t pt-4">
-                    <div className="flex justify-between text-lg font-semibold">
+                    <div className="flex justify-between text-lg font-semibold text-gray-900">
                       <span>Total:</span>
                       <span>{formatPrice(getTotalPrice())}</span>
                     </div>
@@ -613,7 +613,7 @@ export default function TableOrderPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <ClockIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <p className="text-gray-600">Loading table menu...</p>
+          <p className="text-gray-700 font-medium">Loading table menu...</p>
         </div>
       </div>
     }>
