@@ -120,13 +120,13 @@ function PaymentCard({ payment }: { payment: Payment }) {
 
       <dl className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <dt className="text-sm font-medium text-gray-500">Amount</dt>
+          <dt className="text-sm font-semibold text-gray-800">Amount</dt>
           <dd className="mt-1 text-lg font-semibold text-gray-900">
             {payment.order?.total_amount ? formatCurrency(payment.order.total_amount) : 'N/A'}
           </dd>
         </div>
         <div>
-          <dt className="text-sm font-medium text-gray-500">Method</dt>
+          <dt className="text-sm font-semibold text-gray-800">Method</dt>
           <dd className="mt-1 flex items-center text-sm text-gray-900">
             <MethodIcon className="h-4 w-4 mr-2" />
             {methodConf?.label || payment.method}
@@ -136,7 +136,7 @@ function PaymentCard({ payment }: { payment: Payment }) {
 
       {payment.transaction_id && (
         <dl className="mt-3">
-          <dt className="text-sm font-medium text-gray-500">Transaction ID</dt>
+          <dt className="text-sm font-semibold text-gray-800">Transaction ID</dt>
           <dd className="mt-1 text-sm text-gray-900 font-mono">
             {payment.transaction_id}
           </dd>
@@ -144,8 +144,8 @@ function PaymentCard({ payment }: { payment: Payment }) {
       )}
 
       {payment.verifier && (
-        <div className="mt-3 text-sm text-gray-500">
-          Verified by: {payment.verifier.username}
+        <div className="mt-3 text-sm text-gray-700 font-medium">
+          Verified by: <span className="text-gray-900">{payment.verifier.username}</span>
         </div>
       )}
 
@@ -217,7 +217,7 @@ function PaymentCard({ payment }: { payment: Payment }) {
                               <p className="text-sm font-medium text-gray-900">
                                 {item.inventory?.name || `Product #${item.inventory_id}`}
                               </p>
-                              <div className="flex flex-wrap items-center text-xs text-gray-500 mt-1 gap-x-2">
+                              <div className="flex flex-wrap items-center text-xs text-gray-700 mt-1 gap-x-2 font-medium">
                                 <span>Qty: {item.quantity}</span>
                                 <span>•</span>
                                 <span>Unit: {formatCurrency(item.price || item.unit_price || 0)}</span>
@@ -250,30 +250,30 @@ function PaymentCard({ payment }: { payment: Payment }) {
               <div className="bg-white rounded-md border border-gray-200 p-3">
                 <div className="space-y-2">
                   <div className="flex flex-col sm:flex-row sm:justify-between text-sm gap-1">
-                    <span className="text-gray-600">Payment Method:</span>
-                    <span className="font-medium flex items-center">
+                    <span className="text-gray-800 font-medium">Payment Method:</span>
+                    <span className="font-medium flex items-center text-gray-900">
                       <MethodIcon className="h-4 w-4 mr-1" />
                       {methodConf?.label || payment.method}
                     </span>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:justify-between text-sm gap-1">
-                    <span className="text-gray-600">Order Date:</span>
-                    <span className="font-medium">
+                    <span className="text-gray-800 font-medium">Order Date:</span>
+                    <span className="font-medium text-gray-900">
                       {new Date(payment.order.created_at || payment.created_at).toLocaleDateString()} at{' '}
                       {new Date(payment.order.created_at || payment.created_at).toLocaleTimeString()}
                     </span>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:justify-between text-sm gap-1">
-                    <span className="text-gray-600">Payment Date:</span>
-                    <span className="font-medium">
+                    <span className="text-gray-800 font-medium">Payment Date:</span>
+                    <span className="font-medium text-gray-900">
                       {new Date(payment.created_at).toLocaleDateString()} at{' '}
                       {new Date(payment.created_at).toLocaleTimeString()}
                     </span>
                   </div>
                   {payment.order.waiter && (
                     <div className="flex flex-col sm:flex-row sm:justify-between text-sm gap-1">
-                      <span className="text-gray-600">Served by:</span>
-                      <span className="font-medium">{payment.order.waiter.user?.username || 'N/A'}</span>
+                      <span className="text-gray-800 font-medium">Served by:</span>
+                      <span className="font-medium text-gray-900">{payment.order.waiter.user?.username || 'N/A'}</span>
                     </div>
                   )}
                   <div className="pt-2 border-t border-gray-200">
@@ -445,19 +445,19 @@ export default function PaymentsPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-white p-4 rounded-lg shadow border">
               <div className="text-2xl font-bold text-purple-600">{stats.todayPayments}</div>
-              <div className="text-sm text-gray-500">Today&apos;s Payments</div>
+              <div className="text-sm text-gray-700 font-medium">Today&apos;s Payments</div>
             </div>
             <div className="bg-white p-4 rounded-lg shadow border">
               <div className="text-2xl font-bold text-green-600">{formatCurrency(stats.totalToday)}</div>
-              <div className="text-sm text-gray-500">Today&apos;s Revenue</div>
+              <div className="text-sm text-gray-700 font-medium">Today&apos;s Revenue</div>
             </div>
             <div className="bg-white p-4 rounded-lg shadow border">
               <div className="text-2xl font-bold text-blue-600">{stats.statusCounts.verified || 0}</div>
-              <div className="text-sm text-gray-500">Verified</div>
+              <div className="text-sm text-gray-700 font-medium">Verified</div>
             </div>
             <div className="bg-white p-4 rounded-lg shadow border">
               <div className="text-2xl font-bold text-red-600">{stats.statusCounts.rejected || 0}</div>
-              <div className="text-sm text-gray-500">Rejected</div>
+              <div className="text-sm text-gray-700 font-medium">Rejected</div>
             </div>
           </div>
         )}
