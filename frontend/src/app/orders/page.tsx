@@ -144,7 +144,7 @@ function OrderCard({ order }: { order: Order }) {
             <h3 className="text-base sm:text-lg font-medium text-gray-900">
               Order #{order.id}
             </h3>
-            <p className="text-xs sm:text-sm text-gray-500">
+            <p className="text-xs sm:text-sm text-gray-700 font-medium">
               Table {order.table?.id || order.table_id} • {new Date(order.created_at).toLocaleTimeString()}
             </p>
           </div>
@@ -162,7 +162,7 @@ function OrderCard({ order }: { order: Order }) {
           <ul className="space-y-1">
             {(order.orderItems || order.items || []).map((item, index) => (
               <li key={item.id || index} className="flex justify-between text-sm">
-                <span className="text-gray-600">
+                <span className="text-gray-800 font-medium">
                   {item.quantity}x {item.inventory?.name || `Item ${item.inventory_id}`}
                 </span>
                 <span className="text-gray-900">
@@ -172,7 +172,7 @@ function OrderCard({ order }: { order: Order }) {
             ))}
           </ul>
           {(order.orderItems || order.items || []).length === 0 && (
-            <p className="text-sm text-gray-500 italic">No items found</p>
+            <p className="text-sm text-gray-700 italic font-medium">No items found</p>
           )}
           <div className="mt-2 pt-2 border-t border-gray-200">
             <div className="flex justify-between text-sm font-medium">
@@ -183,7 +183,7 @@ function OrderCard({ order }: { order: Order }) {
       </div>
 
       <div className="mt-4 flex justify-between items-center">
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-700 font-medium">
             {order.waiter?.user?.username && `Waiter: ${order.waiter.user.username}`}
           </div>
           <div className="flex space-x-2">
@@ -270,7 +270,7 @@ export default function OrdersPage() {
         {/* Header */}
         <div className="text-center sm:text-left">
           <h1 className="heading-responsive font-bold text-gray-900">Orders Management</h1>
-          <p className="mt-1 text-responsive text-gray-500">
+          <p className="mt-1 text-responsive text-gray-700 font-medium">
             {user?.role === 'bar' ? 'Prepare and manage drink orders' : 
              user?.role === 'waiter' ? 'View and deliver orders' : 
              'Monitor all orders and operations'}
@@ -297,7 +297,7 @@ export default function OrdersPage() {
                     </div>
                     <div className="ml-5 w-0 flex-1">
                       <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">
+                        <dt className="text-sm font-semibold text-gray-700 truncate">
                           {config?.label || status}
                         </dt>
                         <dd className="text-lg font-medium text-gray-900">
@@ -332,7 +332,7 @@ export default function OrdersPage() {
           <div className="text-center py-12">
             <ClockIcon className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">No orders</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-gray-700 font-medium">
               No orders found for your role.
             </p>
           </div>
