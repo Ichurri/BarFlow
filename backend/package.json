@@ -22,6 +22,7 @@
     "migration:generate": "npm run typeorm -- migration:generate -d src/config/database.config.ts",
     "migration:run": "npm run typeorm -- migration:run -d src/config/database.config.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d src/config/database.config.ts",
+    "create-tables": "ts-node src/scripts/create-tables.ts",
     "seed": "ts-node src/database/seed.ts",
     "seed:nightclub": "ts-node src/database/seed-nightclub.ts",
     "reset-ids": "ts-node src/scripts/reset-ids.ts",

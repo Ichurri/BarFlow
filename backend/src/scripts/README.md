@@ -1,7 +1,39 @@
-# 🔄 Reset Database IDs - BarFlow
+# 🛠️ Database Scripts - BarFlow
 
-## Descripción
-Este script reinicia completamente la base de datos eliminando todos los datos y reiniciando las secuencias de IDs en PostgreSQL.
+## Scripts Disponibles
+
+### 1. 🏗️ Crear Tablas Iniciales (`create-tables`)
+
+Crea todas las tablas de la base de datos con sus relaciones, índices, constraints y tipos ENUM.
+
+**Ejecutar:**
+```bash
+cd backend
+npm run create-tables
+```
+
+**Archivos:**
+- `create-tables.ts` - Script TypeScript para ejecutar el SQL
+- `create-tables.sql` - Schema SQL completo
+
+**Tablas creadas:**
+- users
+- bars
+- waiters
+- tables
+- inventory
+- orders
+- order_items
+- payments
+- payment_logs
+
+**⚠️ ADVERTENCIA:** Este script eliminará las tablas existentes (DROP TABLE CASCADE).
+
+---
+
+### 2. 🔄 Reset Database IDs
+
+Reinicia completamente la base de datos eliminando todos los datos y reiniciando las secuencias de IDs en PostgreSQL.
 
 ## ⚠️ ADVERTENCIA IMPORTANTE
 **Esta operación eliminará TODOS los datos de la base de datos y NO se puede deshacer.**
