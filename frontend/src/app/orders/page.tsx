@@ -87,7 +87,7 @@ function OrderCard({ order }: { order: Order }) {
   const getAvailableActions = () => {
     const actions = [];
 
-    // Admin puede hacer todo
+    // Admin can do everything
     if (user?.role === 'admin') {
       switch (order.status) {
         case 'pending':
@@ -104,7 +104,7 @@ function OrderCard({ order }: { order: Order }) {
           break;
       }
     }
-    // Barra puede confirmar pagos y manejar preparación
+    // Bar can confirm payments and manage preparation
     else if (user?.role === 'bar') {
       switch (order.status) {
         case 'pending':
@@ -118,7 +118,7 @@ function OrderCard({ order }: { order: Order }) {
           break;
       }
     }
-    // Mesero puede entregar órdenes listas
+    // Waiter can deliver ready orders
     else if (user?.role === 'waiter') {
       if (order.status === 'ready') {
         actions.push({ type: 'deliver', label: 'Mark Delivered', mutation: deliverOrderMutation });
