@@ -604,7 +604,7 @@ export default function Dashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold">
-                Welcome back, {user?.username}! 👋
+                Welcome back, {user?.username}!!
               </h1>
               <p className="mt-2 text-blue-100">
                 {new Date().toLocaleDateString('es-ES', {
