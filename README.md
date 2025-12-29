@@ -8,7 +8,6 @@
 
 A comprehensive bar and restaurant management system with QR code ordering, real-time order tracking, payment processing, and role-based access control. Built with modern web technologies for optimal performance and user experience.
 
-
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
