@@ -138,14 +138,14 @@ function TopItemsCard({ title, items, type }: {
                       +${(item.total_profit || 0).toFixed(2)}
                     </p>
                     <p className="text-xs text-gray-600">
-                      {(item.profit_margin || 0).toFixed(1)}% margen
+                      {(item.profit_margin || 0).toFixed(1)}% margin
                     </p>
                   </div>
                 ) : (
                   <div>
                     <p className="font-semibold">{item.total_sold || item.recent_sales}</p>
                     <p className="text-xs text-gray-600">
-                      {type === 'trending' ? 'últimos 7 días' : 'vendidos'}
+                      {type === 'trending' ? 'last 7 days' : 'sold'}
                     </p>
                   </div>
                 )}
@@ -386,7 +386,7 @@ export default function Dashboard() {
 
   // Chart data configurations
   const orderStatusData = {
-    labels: ['Pendiente', 'Confirmado', 'Preparando', 'Listo', 'Entregado'],
+    labels: ['Pending', 'Confirmed', 'Preparing', 'Ready', 'Delivered'],
     datasets: [{
       data: [
         stats.pendingOrders,
@@ -408,7 +408,7 @@ export default function Dashboard() {
   };
 
   const tableStatusData = {
-    labels: ['Disponible', 'Ocupada', 'Reservada'],
+    labels: ['Available', 'Occupied', 'Reserved'],
     datasets: [{
       data: [stats.availableTables, stats.occupiedTables, stats.reservedTables],
       backgroundColor: [
@@ -422,9 +422,9 @@ export default function Dashboard() {
   };
 
   const revenueData = {
-    labels: ['Ayer', 'Hoy'],
+    labels: ['Yesterday', 'Today'],
     datasets: [{
-      label: 'Ingresos ($)',
+      label: 'Revenue ($)',
       data: [stats.yesterdayRevenue, stats.todayRevenue],
       backgroundColor: 'rgba(99, 102, 241, 0.1)',
       borderColor: 'rgb(99, 102, 241)',
@@ -618,7 +618,7 @@ export default function Dashboard() {
             <div className="mt-4 sm:mt-0 flex items-center space-x-2">
               <div className="bg-white/20 rounded-lg px-3 py-2">
                 <span className="text-sm font-medium">
-                  {stats.activeOrders} órdenes activas
+                  {stats.activeOrders} active orders
                 </span>
               </div>
             </div>
@@ -635,19 +635,19 @@ export default function Dashboard() {
           <div className="lg:col-span-2 space-y-6">
             
             {/* Revenue Trend Chart */}
-            <ChartCard title="Tendencia de Ingresos" subtitle="Comparación diaria">
+            <ChartCard title="Revenue Trend" subtitle="Daily comparison">
               <div className="h-80">
                 <Line data={revenueData} options={lineOptions} />
               </div>
               <div className="mt-4 grid grid-cols-2 gap-4 text-center">
                 <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-sm text-gray-600">Ayer</p>
+                  <p className="text-sm text-gray-600">Yesterday</p>
                   <p className="text-lg font-semibold text-gray-900">
                     ${stats.yesterdayRevenue.toFixed(2)}
                   </p>
                 </div>
                 <div className="bg-blue-50 rounded-lg p-3">
-                  <p className="text-sm text-blue-600">Hoy</p>
+                  <p className="text-sm text-blue-600">Today</p>
                   <p className="text-lg font-semibold text-blue-900">
                     ${stats.todayRevenue.toFixed(2)}
                   </p>
@@ -668,7 +668,7 @@ export default function Dashboard() {
             </ChartCard>
 
             {/* Order Status Distribution */}
-            <ChartCard title="Estado de Órdenes" subtitle="Distribución actual">
+            <ChartCard title="Order Status" subtitle="Current distribution">
               <div className="h-80">
                 <Doughnut data={orderStatusData} options={doughnutOptions} />
               </div>
@@ -676,21 +676,21 @@ export default function Dashboard() {
                 <div className="text-center">
                   <div className="flex items-center justify-center mb-1">
                     <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-                    <span className="text-gray-600">Pendientes</span>
+                    <span className="text-gray-600">Pending</span>
                   </div>
                   <p className="font-semibold text-lg">{stats.pendingOrders}</p>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center mb-1">
                     <div className="w-3 h-3 bg-amber-500 rounded-full mr-2"></div>
-                    <span className="text-gray-600">Confirmadas</span>
+                    <span className="text-gray-600">Confirmed</span>
                   </div>
                   <p className="font-semibold text-lg">{stats.confirmedOrders}</p>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center mb-1">
                     <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                    <span className="text-gray-600">Listas</span>
+                    <span className="text-gray-600">Ready</span>
                   </div>
                   <p className="font-semibold text-lg">{stats.readyOrders}</p>
                 </div>
@@ -702,7 +702,7 @@ export default function Dashboard() {
           <div className="space-y-6">
             
             {/* Table Status */}
-            <ChartCard title="Estado de Mesas" subtitle="Ocupación actual">
+            <ChartCard title="Table Status" subtitle="Current occupancy">
               <div className="h-64">
                 <Doughnut data={tableStatusData} options={doughnutOptions} />
               </div>
@@ -710,21 +710,21 @@ export default function Dashboard() {
                 <div className="flex justify-between items-center">
                   <div className="flex items-center">
                     <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                    <span>Disponibles</span>
+                    <span>Available</span>
                   </div>
                   <span className="font-semibold">{stats.availableTables}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <div className="flex items-center">
                     <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-                    <span>Ocupadas</span>
+                    <span>Occupied</span>
                   </div>
                   <span className="font-semibold">{stats.occupiedTables}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <div className="flex items-center">
                     <div className="w-3 h-3 bg-amber-500 rounded-full mr-2"></div>
-                    <span>Reservadas</span>
+                    <span>Reserved</span>
                   </div>
                   <span className="font-semibold">{stats.reservedTables}</span>
                 </div>
@@ -735,7 +735,7 @@ export default function Dashboard() {
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <BellIcon className="h-5 w-5 text-yellow-500 mr-2" />
-                Alertas
+                Alerts
               </h3>
               <div className="space-y-3">
                 {stats.lowStockItems > 0 && (
@@ -744,10 +744,10 @@ export default function Dashboard() {
                       <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mr-2" />
                       <div>
                         <p className="text-sm font-medium text-red-800">
-                          Stock Bajo
+                          Low Stock
                         </p>
                         <p className="text-xs text-red-600">
-                          {stats.lowStockItems} productos con stock bajo
+                          {stats.lowStockItems} products with low stock
                         </p>
                       </div>
                     </div>
@@ -760,10 +760,10 @@ export default function Dashboard() {
                       <CreditCardIcon className="h-5 w-5 text-amber-500 mr-2" />
                       <div>
                         <p className="text-sm font-medium text-amber-800">
-                          Pagos Pendientes
+                          Pending Payments
                         </p>
                         <p className="text-xs text-amber-600">
-                          {stats.pendingPaymentCount} pagos por verificar
+                          {stats.pendingPaymentCount} payments to verify
                         </p>
                       </div>
                     </div>
@@ -776,10 +776,10 @@ export default function Dashboard() {
                       <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
                       <div>
                         <p className="text-sm font-medium text-green-800">
-                          Órdenes Listas
+                          Ready Orders
                         </p>
                         <p className="text-xs text-green-600">
-                          {stats.readyOrders} órdenes listas para entregar
+                          {stats.readyOrders} orders ready to deliver
                         </p>
                       </div>
                     </div>
@@ -809,12 +809,12 @@ export default function Dashboard() {
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <ChartBarIcon className="h-5 w-5 text-blue-500 mr-2" />
-                Métricas
+                Metrics
               </h3>
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600">Eficiencia de Órdenes</span>
+                    <span className="text-gray-600">Order Efficiency</span>
                     <span className="font-medium">
                       {stats.totalOrders > 0 
                         ? Math.round((stats.deliveredOrders / stats.totalOrders) * 100)
@@ -835,7 +835,7 @@ export default function Dashboard() {
 
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600">Ocupación de Mesas</span>
+                    <span className="text-gray-600">Table Occupancy</span>
                     <span className="font-medium">
                       {stats.totalTables > 0 
                         ? Math.round((stats.occupiedTables / stats.totalTables) * 100)
@@ -857,7 +857,7 @@ export default function Dashboard() {
                 {user?.role === 'admin' && (
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-600">Stock Saludable</span>
+                      <span className="text-gray-600">Healthy Stock</span>
                       <span className="font-medium">
                         {stats.totalItems > 0 
                           ? Math.round(((stats.totalItems - stats.lowStockItems) / stats.totalItems) * 100)
@@ -885,7 +885,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
             <RocketLaunchIcon className="h-5 w-5 text-purple-500 mr-2" />
-            Acciones Rápidas
+            Quick Actions
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {user?.role === 'admin' && (
@@ -899,8 +899,8 @@ export default function Dashboard() {
                       <ArchiveBoxIcon className="h-8 w-8 text-purple-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-purple-900">Inventario</p>
-                      <p className="text-xs text-purple-700">Gestionar productos</p>
+                      <p className="text-sm font-semibold text-purple-900">Inventory</p>
+                      <p className="text-xs text-purple-700">Manage products</p>
                     </div>
                   </div>
                 </a>
@@ -913,8 +913,8 @@ export default function Dashboard() {
                       <UsersIcon className="h-8 w-8 text-blue-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-blue-900">Usuarios</p>
-                      <p className="text-xs text-blue-700">Gestionar personal</p>
+                      <p className="text-sm font-semibold text-blue-900">Users</p>
+                      <p className="text-xs text-blue-700">Manage staff</p>
                     </div>
                   </div>
                 </a>
@@ -932,8 +932,8 @@ export default function Dashboard() {
                       <ClipboardDocumentListIcon className="h-8 w-8 text-amber-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-amber-900">Órdenes</p>
-                      <p className="text-xs text-amber-700">Confirmar pedidos</p>
+                      <p className="text-sm font-semibold text-amber-900">Orders</p>
+                      <p className="text-xs text-amber-700">Confirm orders</p>
                     </div>
                   </div>
                 </a>
@@ -946,8 +946,8 @@ export default function Dashboard() {
                       <CreditCardIcon className="h-8 w-8 text-green-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-green-900">Pagos</p>
-                      <p className="text-xs text-green-700">Verificar pagos</p>
+                      <p className="text-sm font-semibold text-green-900">Payments</p>
+                      <p className="text-xs text-green-700">Verify payments</p>
                     </div>
                   </div>
                 </a>
@@ -965,8 +965,8 @@ export default function Dashboard() {
                       <TableCellsIcon className="h-8 w-8 text-indigo-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-indigo-900">Mis Mesas</p>
-                      <p className="text-xs text-indigo-700">Gestionar mesas</p>
+                      <p className="text-sm font-semibold text-indigo-900">My Tables</p>
+                      <p className="text-xs text-indigo-700">Manage tables</p>
                     </div>
                   </div>
                 </a>
@@ -979,8 +979,8 @@ export default function Dashboard() {
                       <ClipboardDocumentListIcon className="h-8 w-8 text-green-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-green-900">Órdenes Listas</p>
-                      <p className="text-xs text-green-700">Para entregar</p>
+                      <p className="text-sm font-semibold text-green-900">Ready Orders</p>
+                      <p className="text-xs text-green-700">To deliver</p>
                     </div>
                   </div>
                 </a>
@@ -993,32 +993,32 @@ export default function Dashboard() {
         {(user?.role === 'admin' || user?.role === 'bar') && itemsStats && (
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">📊 Análisis de Productos</h2>
-              <p className="text-gray-600">Insights detallados sobre el rendimiento de tus productos</p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">📊 Product Analytics</h2>
+              <p className="text-gray-600">Detailed insights about your products performance</p>
             </div>
 
             {/* Top Performance Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
               <TopItemsCard
-                title="Más Vendidos"
+                title="Best Sellers"
                 items={itemsStats.mostSoldItems}
                 type="best"
               />
               
               <TopItemsCard
-                title="Menos Vendidos"
+                title="Worst Sellers"
                 items={itemsStats.leastSoldItems}
                 type="worst"
               />
 
               <TopItemsCard
-                title="Más Rentables"
+                title="Most Profitable"
                 items={itemsStats.profitabilityAnalysis}
                 type="profitable"
               />
 
               <TopItemsCard
-                title="Tendencias"
+                title="Trends"
                 items={itemsStats.recentTrends}
                 type="trending"
               />
@@ -1028,7 +1028,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               
               {/* Categories Performance */}
-              <ChartCard title="Rendimiento por Categorías" subtitle="Ventas por tipo de producto">
+              <ChartCard title="Performance by Categories" subtitle="Sales by product type">
                 <CategoriesChart data={itemsStats.itemsByCategory} />
               </ChartCard>
 
@@ -1036,17 +1036,17 @@ export default function Dashboard() {
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <span className="text-2xl mr-2">⚠️</span>
-                  Productos Sin Vender
+                  Never Sold Products
                 </h3>
                 
                 {itemsStats.neverSoldItems && itemsStats.neverSoldItems.length > 0 ? (
                   <div className="space-y-3">
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
                       <p className="text-sm text-red-800 font-medium">
-                        {itemsStats.neverSoldItems.length} productos nunca han sido vendidos
+                        {itemsStats.neverSoldItems.length} products have never been sold
                       </p>
                       <p className="text-xs text-red-600 mt-1">
-                        Considera revisar precios, promociones o eliminar del menú
+                        Consider reviewing prices, promotions or removing from menu
                       </p>
                     </div>
                     
@@ -1077,10 +1077,10 @@ export default function Dashboard() {
                       <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
                       <div>
                         <p className="text-sm font-medium text-green-800">
-                          ¡Excelente!
+                          Excellent!
                         </p>
                         <p className="text-xs text-green-600">
-                          Todos los productos han sido vendidos al menos una vez
+                          All products have been sold at least once
                         </p>
                       </div>
                     </div>
@@ -1094,7 +1094,7 @@ export default function Dashboard() {
               <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <span className="text-2xl mr-2">💎</span>
-                  Insights de Rentabilidad
+                  Profitability Insights
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1102,7 +1102,7 @@ export default function Dashboard() {
                     <p className="text-2xl font-bold text-green-600">
                       ${itemsStats.profitabilityAnalysis[0]?.total_profit?.toFixed(2) || '0.00'}
                     </p>
-                    <p className="text-sm text-gray-600">Producto más rentable</p>
+                    <p className="text-sm text-gray-600">Most profitable product</p>
                     <p className="text-xs font-medium text-gray-900 mt-1">
                       {itemsStats.profitabilityAnalysis[0]?.name || 'N/A'}
                     </p>
@@ -1112,16 +1112,16 @@ export default function Dashboard() {
                     <p className="text-2xl font-bold text-blue-600">
                       {itemsStats.profitabilityAnalysis[0]?.profit_margin?.toFixed(1) || '0'}%
                     </p>
-                    <p className="text-sm text-gray-600">Mejor margen</p>
-                    <p className="text-xs text-gray-500 mt-1">Promedio del top producto</p>
+                    <p className="text-sm text-gray-600">Best margin</p>
+                    <p className="text-xs text-gray-500 mt-1">Top product average</p>
                   </div>
                   
                   <div className="bg-white rounded-lg p-4 text-center">
                     <p className="text-2xl font-bold text-purple-600">
                       {itemsStats.profitabilityAnalysis.reduce((sum: number, item: ItemData) => sum + (item.total_profit || 0), 0).toFixed(2)}
                     </p>
-                    <p className="text-sm text-gray-600">Ganancia total</p>
-                    <p className="text-xs text-gray-500 mt-1">Top 10 productos</p>
+                    <p className="text-sm text-gray-600">Total profit</p>
+                    <p className="text-xs text-gray-500 mt-1">Top 10 products</p>
                   </div>
                 </div>
               </div>
