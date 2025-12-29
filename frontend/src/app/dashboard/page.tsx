@@ -155,7 +155,7 @@ function TopItemsCard({ title, items, type }: {
         </div>
       ) : (
         <div className="text-center py-8 text-gray-500">
-          <p>No hay datos disponibles</p>
+          <p>No data available</p>
         </div>
       )}
     </div>
@@ -173,7 +173,7 @@ function CategoriesChart({ data }: { data: CategoryData[] }) {
   if (!data || data.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
-        <p>No hay datos de categorías disponibles</p>
+        <p>No category data available</p>
       </div>
     );
   }
@@ -184,7 +184,7 @@ function CategoriesChart({ data }: { data: CategoryData[] }) {
   ];
 
   const chartData = {
-    labels: data.map(item => item.category || 'Sin categoría'),
+    labels: data.map(item => item.category || 'Uncategorized'),
     datasets: [{
       data: data.map(item => item.total_sold),
       backgroundColor: data.map((_, index) => categoryColors[index % categoryColors.length]),
@@ -223,7 +223,7 @@ function CategoriesChart({ data }: { data: CategoryData[] }) {
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: categoryColors[index % categoryColors.length] }}
               ></div>
-              <span className="capitalize font-medium">{category.category || 'Sin categoría'}</span>
+              <span className="capitalize font-medium">{category.category || 'Uncategorized'}</span>
             </div>
             <div className="text-right">
               <p className="font-semibold">{category.total_sold}</p>
@@ -793,10 +793,10 @@ export default function Dashboard() {
                       <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
                       <div>
                         <p className="text-sm font-medium text-green-800">
-                          Todo en orden
+                          All good
                         </p>
                         <p className="text-xs text-green-600">
-                          No hay alertas pendientes
+                          No pending alerts
                         </p>
                       </div>
                     </div>
